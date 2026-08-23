@@ -22,10 +22,6 @@ export default function Login() {
           <p>Faça login para acessar sua conta</p>
           
           <LoginForm onSuccess={handleLoginSuccess} />
-
-          <p className="auth-link">
-            Não tem conta? <Link to="/cadastro">Cadastre-se</Link>
-          </p>
         </div>
       </div>
     </>

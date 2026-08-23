@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import api from '../services/api';
+import api from '../services/Api';
 
 export default function CadastroForm({ onSuccess }) {
   const [form, setForm] = useState({
