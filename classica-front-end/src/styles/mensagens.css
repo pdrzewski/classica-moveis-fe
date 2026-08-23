@@ -1,0 +1,105 @@
+.stock-tag {
+  display: inline-block;
+  padding: 5px 9px;
+  background: #e9f0e2;
+  color: #66804b;
+  font-size: 11px;
+}
+
+.stock-tag.low {
+  background: #faedd9;
+  color: #a16c35;
+}
+
+.stock-tag.empty {
+  background: #f7e2dd;
+  color: #aa594b;
+}
+
+.modal-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: #20241f80;
+}
+
+.modal-card {
+  position: relative;
+  width: min(530px, 100%);
+  max-height: 90vh;
+  overflow: auto;
+  padding: 31px;
+  background: #fff;
+}
+
+.modal-card h2 {
+  margin-bottom: 24px;
+}
+
+.modal-card .primary {
+  width: 100%;
+  margin-top: 8px;
+}
+
+.close {
+  position: absolute;
+  top: 16px;
+  right: 18px;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  font-size: 25px;
+}
+
+.notice {
+  margin-bottom: 18px;
+  padding: 13px 17px;
+  background: #e9f0e2;
+  color: #4e6b3b;
+  font-size: 13px;
+}
+
+.notice button {
+  float: right;
+  border: 0;
+  background: none;
+  cursor: pointer;
+}
+
+.history-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 19px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.history-icon {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  background: #e9f0e2;
+  color: var(--green);
+  font-weight: 700;
+}
+
+.history-row div {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.history-row small {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.history-row b {
+  color: var(--green);
+  font-size: 13px;
+}

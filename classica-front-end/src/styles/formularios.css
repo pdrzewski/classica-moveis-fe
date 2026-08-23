@@ -1,0 +1,47 @@
+.form-surface {
+  width: 100%;
+  max-width: 700px;
+  padding: 31px;
+}
+
+.form-surface label,
+.modal-card label {
+  display: grid;
+  gap: 7px;
+  margin-bottom: 15px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.form-surface select,
+.form-surface textarea,
+.modal-card input {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid var(--line);
+  outline: none;
+}
+
+.form-surface textarea {
+  min-height: 130px;
+  resize: vertical;
+}
+
+.direction {
+  display: flex;
+  gap: 9px;
+  margin-bottom: 25px;
+}
+
+.direction button {
+  padding: 11px 15px;
+  border: 1px solid var(--line);
+  background: #fff;
+  cursor: pointer;
+}
+
+.direction .selected {
+  background: var(--ink);
+  color: #fff;
+}

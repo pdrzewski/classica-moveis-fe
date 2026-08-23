@@ -1,0 +1,76 @@
+.table-surface {
+  padding: 0 24px 24px;
+}
+
+.table-toolbar,
+.filters {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  padding: 21px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.table-toolbar > div {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.table-toolbar small {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.table-toolbar input,
+.filters input,
+.filters select {
+  min-width: 190px;
+  padding: 11px 13px;
+  border: 1px solid var(--line);
+  outline: none;
+  background: #fafbf9;
+}
+
+.filters {
+  border: 0;
+}
+
+.table-wrap {
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  min-width: 650px;
+  border-collapse: collapse;
+}
+
+th {
+  padding: 17px 12px;
+  color: var(--muted);
+  font-size: 11px;
+  letter-spacing: 0.07em;
+  text-align: left;
+  text-transform: uppercase;
+}
+
+td {
+  padding: 17px 12px;
+  border-top: 1px solid var(--line);
+  font-size: 13px;
+}
+
+.row-actions {
+  white-space: nowrap;
+}
+
+.row-actions button {
+  margin-right: 10px;
+  border: 0;
+  background: none;
+  color: var(--orange-dark);
+  cursor: pointer;
+  font-size: 12px;
+}
