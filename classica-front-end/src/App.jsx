@@ -1,0 +1,32 @@
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import Login from './pages/Login';
+import Cadastro from './pages/Cadastro';
+import Home from './pages/home';
+import AppLayout from './components/AppLayout';
+import CadastroPage from './pages/CadastroPage';
+import Estoque from './pages/Estoque';
+import Movimentacao from './pages/Movimentacao';
+import Historico from './pages/Historico';
+import Relatorios from './pages/Relatorios';
+
+function App() {
+  return (
+    <Router>
+      <Routes>
+        <Route path="/" element={<Navigate to="/home" replace />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/cadastro" element={<Cadastro />} />
+        <Route element={<AppLayout />}>
+          <Route path="/home" element={<Home />} />
+          <Route path="/cadastro/:tipo" element={<CadastroPage />} />
+          <Route path="/estoque" element={<Estoque />} />
+          <Route path="/movimentacao" element={<Movimentacao />} />
+          <Route path="/historico" element={<Historico />} />
+          <Route path="/relatorios" element={<Relatorios />} />
+        </Route>
+      </Routes>
+    </Router>
+  );
+}
+
+export default App;

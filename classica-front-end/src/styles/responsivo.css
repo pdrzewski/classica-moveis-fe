@@ -1,0 +1,395 @@
+/* Tablets grandes e abaixo */
+@media (max-width: 1200px) {
+  .barra-lateral {
+    transform: translateX(-100%);
+    transition: transform 0.25s;
+  }
+
+  .barra-lateral.aberto {
+    transform: translateX(0);
+  }
+
+  .fundo {
+    position: fixed;
+    inset: 82px 0 0;
+    z-index: 3;
+    display: block;
+    border: 0;
+    background: #20241f70;
+  }
+
+  .conteudo-pagina {
+    margin-left: 0;
+    padding: 35px 5%;
+  }
+
+  .grade-metrica {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .grade-inicio {
+    grid-template-columns: 1fr;
+  }
+
+  .usuario-pilula span:last-child {
+    display: none;
+  }
+}
+
+/* Tablets e abaixo */
+@media (max-width: 900px) {
+  .introducao-pagina {
+    align-items: flex-start;
+    flex-direction: column;
+    margin-bottom: 24px;
+  }
+
+  .introducao-pagina .primario,
+  .chip-data {
+    width: 100%;
+    text-align: center;
+  }
+
+  .introducao-pagina h1 {
+    font-size: 29px;
+  }
+
+  .grade-metrica {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .metrica {
+    min-width: 0;
+    min-height: 135px;
+    padding: 15px;
+  }
+
+  .metrica p,
+  .metrica small {
+    line-height: 1.35;
+  }
+
+  .metrica p {
+    max-width: calc(100% - 24px);
+  }
+
+  .linha-ferias {
+    align-items: flex-start;
+    padding: 15px;
+  }
+
+  .linha-ferias time {
+    max-width: 82px;
+    margin-left: auto;
+    text-align: right;
+  }
+
+  .titulo-secao {
+    padding: 20px 15px 10px;
+  }
+
+  .superficie-tabela {
+    padding-right: 15px;
+    padding-left: 15px;
+  }
+
+  .envoltorio-tabela {
+    margin-right: -15px;
+    padding-right: 15px;
+  }
+
+  .barra-ferramentas-tabela,
+  .filtros {
+    align-items: stretch;
+    flex-direction: column;
+    padding: 15px 0;
+  }
+
+  .barra-ferramentas-tabela input,
+  .filtros input,
+  .filtros select {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .camada-modal {
+    padding: 12px;
+  }
+
+  .cartao-modal {
+    padding: 24px 18px;
+  }
+
+  .superficie-formulario {
+    padding: 22px;
+  }
+
+  .linha-historico {
+    align-items: flex-start;
+  }
+
+  .linha-historico b {
+    max-width: 78px;
+    text-align: right;
+  }
+}
+
+/* Celulares e abaixo */
+@media (max-width: 768px) {
+  .barra-topo {
+    gap: 12px;
+    padding: 0 18px;
+    height: 70px;
+  }
+
+  .marca-logo {
+    width: 95px;
+  }
+
+  .migalha {
+    padding-left: 12px;
+  }
+
+  .migalha span {
+    display: none;
+  }
+
+  .barra-lateral {
+    top: 70px;
+  }
+
+  .fundo {
+    inset: 70px 0 0;
+  }
+
+  .conteudo-pagina {
+    padding: 26px 4%;
+  }
+
+  .shell-aplicacao {
+    min-height: 100vh;
+  }
+}
+
+/* Celulares pequenos */
+@media (max-width: 480px) {
+  .barra-topo {
+    gap: 8px;
+    padding: 0 10px;
+    height: 60px;
+  }
+
+  .marca-logo {
+    width: 82px;
+  }
+
+  .migalha {
+    padding-left: 10px;
+    display: none;
+  }
+
+  .alternador-menu {
+    width: 32px;
+    height: 32px;
+  }
+
+  .usuario-pilula {
+    display: none;
+  }
+
+  .conteudo-pagina {
+    padding: 20px 3%;
+    margin-left: 0;
+  }
+
+  .grade-metrica {
+    grid-template-columns: 1fr;
+    gap: 12px;
+    margin-bottom: 15px;
+  }
+
+  .metrica {
+    min-height: 116px;
+    padding: 12px;
+  }
+
+  .metrica strong {
+    font-size: 28px;
+  }
+
+  .linha-ferias {
+    flex-wrap: wrap;
+    padding: 12px;
+  }
+
+  .linha-ferias time {
+    width: 100%;
+    max-width: none;
+    margin: 8px 0 0 0;
+    text-align: left;
+  }
+
+  .titulo-secao {
+    flex-direction: column;
+    padding: 15px 12px 8px;
+  }
+
+  .crachá-contagem {
+    padding: 4px 8px;
+    font-size: 11px;
+  }
+
+  .superficie-tabela {
+    padding: 12px;
+  }
+
+  .barra-ferramentas-tabela {
+    flex-direction: column;
+    gap: 10px;
+    padding: 10px 0;
+  }
+
+  .barra-ferramentas-tabela > div {
+    width: 100%;
+  }
+
+  .barra-ferramentas-tabela input {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .envoltorio-tabela {
+    overflow-x: auto;
+    margin-right: -12px;
+    padding-right: 12px;
+  }
+
+  table {
+    min-width: 500px;
+    font-size: 12px;
+  }
+
+  th,
+  td {
+    padding: 12px 8px;
+  }
+
+  .acoes-linha button {
+    font-size: 11px;
+    margin-right: 5px;
+  }
+
+  .cartao-modal {
+    width: 90vw;
+    padding: 20px;
+    border-radius: 8px;
+  }
+
+  .cartao-modal h2 {
+    font-size: 18px;
+    margin-bottom: 15px;
+  }
+
+  .fechar {
+    font-size: 20px;
+    top: 12px;
+    right: 12px;
+  }
+
+  .superficie-formulario {
+    width: 100%;
+    max-width: none;
+    padding: 15px;
+  }
+
+  .direcao {
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 15px;
+  }
+
+  .direcao button {
+    width: 100%;
+    padding: 10px;
+    font-size: 14px;
+  }
+
+  .links-rapidos {
+    gap: 8px;
+    margin-top: 15px;
+  }
+
+  .links-rapidos a {
+    padding: 12px;
+    font-size: 12px;
+  }
+
+  .chip-data {
+    width: 100%;
+    text-align: center;
+  }
+
+  .primario {
+    width: 100%;
+    padding: 12px;
+    font-size: 14px;
+  }
+
+  .aviso {
+    padding: 10px 12px;
+    font-size: 12px;
+    margin-bottom: 12px;
+  }
+
+  .grupo-entrada {
+    text-align: left;
+    margin-bottom: 12px;
+  }
+
+  .grupo-entrada label {
+    font-size: 13px;
+    margin-bottom: 6px;
+  }
+
+  .grupo-entrada input {
+    font-size: 14px;
+    padding: 8px;
+  }
+
+  .etiqueta-estoque {
+    font-size: 10px;
+    padding: 4px 6px;
+  }
+
+  .linha-historico {
+    padding: 12px 0;
+    gap: 10px;
+  }
+
+  .icone-historico {
+    width: 28px;
+    height: 28px;
+    font-size: 12px;
+  }
+
+  .linha-historico b {
+    max-width: none;
+    font-size: 12px;
+  }
+
+  .titulo-pequeno {
+    font-size: 9px;
+    margin-bottom: 6px;
+  }
+
+  .introducao-pagina {
+    gap: 15px;
+    margin-bottom: 20px;
+  }
+
+  .introducao-pagina h1 {
+    font-size: 22px;
+    margin-bottom: 6px;
+  }
+}

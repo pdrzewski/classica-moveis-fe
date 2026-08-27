@@ -1,0 +1,47 @@
+.superficie-formulario {
+  width: 100%;
+  max-width: 700px;
+  padding: 31px;
+}
+
+.superficie-formulario label,
+.cartao-modal label {
+  display: grid;
+  gap: 7px;
+  margin-bottom: 15px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.superficie-formulario select,
+.superficie-formulario textarea,
+.cartao-modal input {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid var(--line);
+  outline: none;
+}
+
+.superficie-formulario textarea {
+  min-height: 130px;
+  resize: vertical;
+}
+
+.direcao {
+  display: flex;
+  gap: 9px;
+  margin-bottom: 25px;
+}
+
+.direcao button {
+  padding: 11px 15px;
+  border: 1px solid var(--line);
+  background: #fff;
+  cursor: pointer;
+}
+
+.direcao .selecionado {
+  background: var(--ink);
+  color: #fff;
+}

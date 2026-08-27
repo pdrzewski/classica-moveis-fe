@@ -1,0 +1,72 @@
+.superficie-tabela {
+  padding: 0 24px 24px;
+}
+
+.barra-ferramentas-tabela,
+.filtros {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  padding: 21px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.barra-ferramentas-tabela > div {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.barra-ferramentas-tabela small {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.barra-ferramentas-tabela input,
+.filtros input,
+.filtros select {
+  min-width: 190px;
+  padding: 11px 13px;
+  border: 1px solid var(--line);
+  outline: none;
+  background: #fafbf9;
+}
+
+.envoltorio-tabela {
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  min-width: 650px;
+  border-collapse: collapse;
+}
+
+th {
+  padding: 17px 12px;
+  color: var(--muted);
+  font-size: 11px;
+  letter-spacing: 0.07em;
+  text-align: left;
+  text-transform: uppercase;
+}
+
+td {
+  padding: 17px 12px;
+  border-top: 1px solid var(--line);
+  font-size: 13px;
+}
+
+.acoes-linha {
+  white-space: nowrap;
+}
+
+.acoes-linha button {
+  margin-right: 10px;
+  border: 0;
+  background: none;
+  color: var(--orange-dark);
+  cursor: pointer;
+  font-size: 12px;
+}
