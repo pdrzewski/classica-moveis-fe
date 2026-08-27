@@ -2,7 +2,7 @@ import { useState } from 'react';
 import api from '../services/Api';
 
 export default function LoginForm({ onSuccess }) {
-  const [form, setForm] = useState({ usuario: '', senha: '' });
+  const [form, setForm] = useState({ login: '', senha: '' });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -16,7 +16,7 @@ export default function LoginForm({ onSuccess }) {
     setError('');
 
     try {
-      await api.post('/login/entrar', form);
+      await api.post('/login', form);
       onSuccess?.();
     } catch (err) {
       setError(err.response?.data?.message || 'Usuário ou senha incorretos');
@@ -27,18 +27,18 @@ export default function LoginForm({ onSuccess }) {
 
   return (
     <form onSubmit={handleSubmit}>
-      <div className="grupo-entrada">
+      <div className="input-group">
         <label>Usuário</label>
         <input
           type="text"
-          name="usuario"
-          value={form.usuario}
+          name="login"
+          value={form.login}
           onChange={handleChange}
           required
         />
       </div>
 
-      <div className="grupo-entrada">
+      <div className="input-group">
         <label>Senha</label>
         <input
           type="password"
@@ -49,7 +49,7 @@ export default function LoginForm({ onSuccess }) {
         />
       </div>
 
-      {error && <p className="erro">{error}</p>}
+      {error && <p className="error">{error}</p>}
 
       <button type="submit" disabled={loading}>
         {loading ? 'Entrando...' : 'Entrar'}
