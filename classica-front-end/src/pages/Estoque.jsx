@@ -9,32 +9,32 @@ const stock = [
 export default function Estoque() {
   const [notice, setNotice] = useState('');
   return (
-    <section className="workspace">
-      <div className="page-intro">
+    <section className="area-trabalho">
+      <div className="introducao-pagina">
         <div>
-          <p className="eyebrow">Operação</p>
+          <p className="titulo-pequeno">Operação</p>
           <h1>Estoque</h1>
           <p>Acompanhe os níveis de produtos por loja.</p>
         </div>
-        <button className="primary" onClick={() => setNotice('Exportação iniciada.')}>
+        <button className="primario" onClick={() => setNotice('Exportação iniciada.')}>
           ↓ Exportar PDF
         </button>
       </div>
       {notice && <Notice text={notice} close={() => setNotice('')} />}
-      <div className="surface table-surface">
-        <div className="filters">
+      <div className="superficie superficie-tabela">
+        <div className="filtros">
           <input placeholder="Buscar produto..." />
           <select><option>Todas as lojas</option><option>Clássica Centro</option><option>Clássica Norte</option></select>
           <select><option>Todos os status</option><option>Estoque baixo</option></select>
         </div>
-        <div className="table-wrap">
+        <div className="envoltorio-tabela">
           <table>
             <thead><tr><th>Produto</th><th>Loja</th><th>Quantidade</th><th>Status</th></tr></thead>
             <tbody>
               {stock.map((row) => (
                 <tr key={row[0]}>
                   {row.map((cell, index) => (
-                    <td key={index}>{index === 3 ? <span className={`stock-tag ${cell === 'Sem estoque' ? 'empty' : cell === 'Estoque baixo' ? 'low' : ''}`}>{cell}</span> : cell}</td>
+                    <td key={index}>{index === 3 ? <span className={`etiqueta-estoque ${cell === 'Sem estoque' ? 'vazio' : cell === 'Estoque baixo' ? 'baixo' : ''}`}>{cell}</span> : cell}</td>
                   ))}
                 </tr>
               ))}
@@ -47,5 +47,5 @@ export default function Estoque() {
 }
 
 export function Notice({ text, close }) {
-  return <div className="notice">{text}<button onClick={close}>×</button></div>;
+  return <div className="aviso">{text}<button onClick={close}>×</button></div>;
 }

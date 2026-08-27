@@ -30,39 +30,39 @@ export default function AppLayout() {
   const title = labels[current] || 'Início';
 
   return (
-    <div className="app-shell">
-      <header className="topbar">
-        <button className={`menu-toggle ${open ? 'is-open' : ''}`} onClick={() => setOpen(!open)} aria-label="Abrir menu">
+    <div className="shell-aplicacao">
+      <header className="barra-topo">
+        <button className={`alternador-menu ${open ? 'aberto' : ''}`} onClick={() => setOpen(!open)} aria-label="Abrir menu">
           <span /><span /><span />
         </button>
-        <img src={logo} alt="Clássica Móveis" className="brand-mark" />
-        <div className="crumb"><strong>{title}</strong><span>Clássica Móveis / {title}</span></div>
-        <div className="user-pill"><span className="avatar">CM</span><span>Administrador</span></div>
+        <img src={logo} alt="Clássica Móveis" className="marca-logo" />
+        <div className="migalha"><strong>{title}</strong><span>Clássica Móveis / {title}</span></div>
+        <div className="usuario-pilula"><span className="avatar">CM</span><span>Administrador</span></div>
       </header>
-      <aside className={`sidebar ${open ? 'is-open' : ''}`}>
-        <div className="sidebar-heading">Navegação</div>
-        <NavLink to="/home" onClick={() => setOpen(false)} className={({ isActive }) => `side-link ${isActive ? 'active' : ''}`}>
+      <aside className={`barra-lateral ${open ? 'aberto' : ''}`}>
+        <div className="titulo-barra-lateral">Navegação</div>
+        <NavLink to="/home" onClick={() => setOpen(false)} className={({ isActive }) => `link-lateral ${isActive ? 'ativo' : ''}`}>
           <span>⌂</span> Início
         </NavLink>
-        <button className="side-link side-button" onClick={() => setCadastroOpen(!cadastroOpen)}>
+        <button className="link-lateral botao-lateral" onClick={() => setCadastroOpen(!cadastroOpen)}>
           <span>▦</span> Cadastros <b>{cadastroOpen ? '−' : '+'}</b>
         </button>
-        <div className={`submenu ${cadastroOpen ? 'expanded' : ''}`}>
+        <div className={`submenu ${cadastroOpen ? 'expandido' : ''}`}>
           {cadastroItems.map(([key, label]) => (
-            <NavLink key={key} to={`/cadastro/${key}`} onClick={() => setOpen(false)} className={({ isActive }) => isActive ? 'active' : ''}>
+            <NavLink key={key} to={`/cadastro/${key}`} onClick={() => setOpen(false)} className={({ isActive }) => isActive ? 'ativo' : ''}>
               {label}
             </NavLink>
           ))}
         </div>
         {menuItems.slice(1).map(([path, label], index) => (
-          <NavLink key={path} to={path} onClick={() => setOpen(false)} className={({ isActive }) => `side-link ${isActive ? 'active' : ''}`}>
+          <NavLink key={path} to={path} onClick={() => setOpen(false)} className={({ isActive }) => `link-lateral ${isActive ? 'ativo' : ''}`}>
             <span>{['▤', '⇄', '◷', '▥'][index]}</span> {label}
           </NavLink>
         ))}
-        <div className="sidebar-footer"><span className="status-dot" /> Sistema online</div>
+        <div className="rodape-barra-lateral"><span className="ponto-status" /> Sistema online</div>
       </aside>
-      {open && <button className="backdrop" onClick={() => setOpen(false)} aria-label="Fechar menu" />}
-      <main className="page-content"><Outlet /></main>
+      {open && <button className="fundo" onClick={() => setOpen(false)} aria-label="Fechar menu" />}
+      <main className="conteudo-pagina"><Outlet /></main>
     </div>
   );
 }

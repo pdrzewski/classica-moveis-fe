@@ -27,7 +27,7 @@ export default function LoginForm({ onSuccess }) {
 
   return (
     <form onSubmit={handleSubmit}>
-      <div className="input-group">
+      <div className="grupo-entrada">
         <label>Usuário</label>
         <input
           type="text"
@@ -38,7 +38,7 @@ export default function LoginForm({ onSuccess }) {
         />
       </div>
 
-      <div className="input-group">
+      <div className="grupo-entrada">
         <label>Senha</label>
         <input
           type="password"
@@ -49,7 +49,7 @@ export default function LoginForm({ onSuccess }) {
         />
       </div>
 
-      {error && <p className="error">{error}</p>}
+      {error && <p className="erro">{error}</p>}
 
       <button type="submit" disabled={loading}>
         {loading ? 'Entrando...' : 'Entrar'}

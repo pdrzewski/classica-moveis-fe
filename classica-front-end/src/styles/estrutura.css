@@ -1,8 +1,12 @@
-.app-shell {
+.shell-aplicacao {
   min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  overflow-x: hidden;
 }
 
-.topbar {
+.barra-topo {
   position: sticky;
   top: 0;
   z-index: 5;
@@ -13,9 +17,11 @@
   padding: 0 34px;
   background: var(--cream);
   border-bottom: 1px solid var(--line);
+  width: 100%;
+  box-sizing: border-box;
 }
 
-.menu-toggle {
+.alternador-menu {
   display: grid;
   place-content: center;
   gap: 4px;
@@ -26,7 +32,7 @@
   cursor: pointer;
 }
 
-.menu-toggle span {
+.alternador-menu span {
   display: block;
   width: 17px;
   height: 2px;
@@ -34,25 +40,25 @@
   transition: 0.2s;
 }
 
-.menu-toggle.is-open span:first-child {
+.alternador-menu.aberto span:first-child {
   transform: translateY(6px) rotate(45deg);
 }
 
-.menu-toggle.is-open span:nth-child(2) {
+.alternador-menu.aberto span:nth-child(2) {
   opacity: 0;
 }
 
-.menu-toggle.is-open span:last-child {
+.alternador-menu.aberto span:last-child {
   transform: translateY(-6px) rotate(-45deg);
 }
 
-.brand-mark {
+.marca-logo {
   width: 113px;
   height: auto;
   object-fit: contain;
 }
 
-.crumb {
+.migalha {
   display: flex;
   flex-direction: column;
   gap: 3px;
@@ -60,22 +66,23 @@
   border-left: 1px solid var(--line);
 }
 
-.crumb strong {
+.migalha strong {
   font-size: 15px;
 }
 
-.crumb span,
-.user-pill {
+.migalha span,
+.usuario-pilula {
   color: var(--muted);
   font-size: 12px;
 }
 
-.user-pill {
+.usuario-pilula {
   display: flex;
   align-items: center;
   gap: 10px;
   margin-left: auto;
   font-size: 13px;
+  color: var(--muted);
 }
 
 .avatar {
@@ -90,12 +97,12 @@
   font-weight: 700;
 }
 
-.avatar.soft {
+.avatar.suave {
   background: #ead9be;
   color: #805622;
 }
 
-.sidebar {
+.barra-lateral {
   position: fixed;
   top: 82px;
   bottom: 0;
@@ -108,7 +115,7 @@
   color: #e7e9e3;
 }
 
-.sidebar-heading {
+.titulo-barra-lateral {
   padding: 0 14px 13px;
   color: #92998b;
   font-size: 11px;
@@ -116,7 +123,7 @@
   text-transform: uppercase;
 }
 
-.side-link {
+.link-lateral {
   display: flex;
   align-items: center;
   gap: 13px;
@@ -130,24 +137,24 @@
   text-align: left;
 }
 
-.side-link span {
+.link-lateral span {
   width: 18px;
   font-size: 18px;
   text-align: center;
 }
 
-.side-link b {
+.link-lateral b {
   margin-left: auto;
   color: #92998b;
 }
 
-.side-link:hover,
-.side-link.active {
+.link-lateral:hover,
+.link-lateral.ativo {
   background: #3a3e36;
   color: #fff;
 }
 
-.side-link.active {
+.link-lateral.ativo {
   padding-left: 11px;
   border-left: 3px solid var(--orange);
 }
@@ -158,7 +165,7 @@
   transition: max-height 0.25s ease;
 }
 
-.submenu.expanded {
+.submenu.expandido {
   max-height: 260px;
 }
 
@@ -170,11 +177,11 @@
 }
 
 .submenu a:hover,
-.submenu a.active {
+.submenu a.ativo {
   color: #f5bf77;
 }
 
-.sidebar-footer {
+.rodape-barra-lateral {
   margin-top: auto;
   padding: 19px 14px 0;
   border-top: 1px solid #3b3f38;
@@ -182,7 +189,7 @@
   font-size: 12px;
 }
 
-.status-dot {
+.ponto-status {
   display: inline-block;
   width: 7px;
   height: 7px;
@@ -191,12 +198,13 @@
   background: #8eb16e;
 }
 
-.backdrop {
+.fundo {
   display: none;
 }
 
-.page-content {
-  max-width: 1500px;
+.conteudo-pagina {
   margin-left: 244px;
   padding: 48px 5.5%;
+  width: calc(100% - 244px);
+  box-sizing: border-box;
 }

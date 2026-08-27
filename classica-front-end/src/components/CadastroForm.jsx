@@ -32,7 +32,7 @@ export default function CadastroForm({ onSuccess }) {
 
   return (
     <form onSubmit={handleSubmit}>
-      <div className="input-group">
+      <div className="grupo-entrada">
         <label>Usuário</label>
         <input
           type="text"
@@ -43,7 +43,7 @@ export default function CadastroForm({ onSuccess }) {
         />
       </div>
 
-      <div className="input-group">
+      <div className="grupo-entrada">
         <label>E-mail</label>
         <input
           type="email"
@@ -54,7 +54,7 @@ export default function CadastroForm({ onSuccess }) {
         />
       </div>
 
-      <div className="input-group">
+      <div className="grupo-entrada">
         <label>Nome Completo</label>
         <input
           type="text"
@@ -65,7 +65,7 @@ export default function CadastroForm({ onSuccess }) {
         />
       </div>
 
-      <div className="input-group">
+      <div className="grupo-entrada">
         <label>Senha</label>
         <input
           type="password"
@@ -76,7 +76,7 @@ export default function CadastroForm({ onSuccess }) {
         />
       </div>
 
-      {error && <p className="error">{error}</p>}
+      {error && <p className="erro">{error}</p>}
 
       <button type="submit" disabled={loading}>
         {loading ? 'Cadastrando...' : 'Cadastrar'}

@@ -9,19 +9,19 @@ export default function Movimentacao() {
   };
 
   return (
-    <section className="workspace">
-      <div className="page-intro">
+    <section className="area-trabalho">
+      <div className="introducao-pagina">
         <div>
-          <p className="eyebrow">Operação</p>
+          <p className="titulo-pequeno">Operação</p>
           <h1>Movimentação</h1>
           <p>Registre entradas e saídas com rastreabilidade.</p>
         </div>
       </div>
       {notice && <Notice text={notice} close={() => setNotice('')} />}
-      <div className="surface form-surface">
+      <div className="superficie superficie-formulario">
         <form onSubmit={saveMovement}>
-          <div className="direction">
-            <button type="button" className="selected">↑ Entrada</button>
+          <div className="direcao">
+            <button type="button" className="selecionado">↑ Entrada</button>
             <button type="button">↓ Saída</button>
           </div>
           <label>
@@ -32,7 +32,7 @@ export default function Movimentacao() {
             Produtos e quantidades
             <textarea placeholder="Selecione os produtos e informe as quantidades..." />
           </label>
-          <button className="primary" type="submit">Registrar movimentação</button>
+          <button className="primario" type="submit">Registrar movimentação</button>
         </form>
       </div>
     </section>

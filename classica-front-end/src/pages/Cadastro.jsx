@@ -13,17 +13,17 @@ export default function Cadastro() {
 
   return (
     <>
-      <div className="auth-logo">
+      <div className="logo-autenticacao">
         <img src={logo} alt="Logo da Clássica Móveis" />
       </div>
-      <div className="auth-container">
-        <div className="auth-card">
+      <div className="container-autenticacao">
+        <div className="cartao-autenticacao">
           <h1>Criar Conta</h1>
           <p>Preencha os dados abaixo</p>
           
           <CadastroForm onSuccess={handleCadastroSuccess} />
 
-          <p className="auth-link">
+          <p className="link-autenticacao">
             Já tem conta? <Link to="/login">Faça login</Link>
           </p>
         </div>

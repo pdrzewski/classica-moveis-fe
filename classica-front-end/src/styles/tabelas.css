@@ -1,9 +1,9 @@
-.table-surface {
+.superficie-tabela {
   padding: 0 24px 24px;
 }
 
-.table-toolbar,
-.filters {
+.barra-ferramentas-tabela,
+.filtros {
   display: flex;
   align-items: center;
   gap: 13px;
@@ -11,21 +11,21 @@
   border-bottom: 1px solid var(--line);
 }
 
-.table-toolbar > div {
+.barra-ferramentas-tabela > div {
   display: flex;
   flex: 1;
   flex-direction: column;
   gap: 3px;
 }
 
-.table-toolbar small {
+.barra-ferramentas-tabela small {
   color: var(--muted);
   font-size: 11px;
 }
 
-.table-toolbar input,
-.filters input,
-.filters select {
+.barra-ferramentas-tabela input,
+.filtros input,
+.filtros select {
   min-width: 190px;
   padding: 11px 13px;
   border: 1px solid var(--line);
@@ -33,11 +33,7 @@
   background: #fafbf9;
 }
 
-.filters {
-  border: 0;
-}
-
-.table-wrap {
+.envoltorio-tabela {
   overflow-x: auto;
 }
 
@@ -62,11 +58,11 @@ td {
   font-size: 13px;
 }
 
-.row-actions {
+.acoes-linha {
   white-space: nowrap;
 }
 
-.row-actions button {
+.acoes-linha button {
   margin-right: 10px;
   border: 0;
   background: none;

@@ -9,16 +9,16 @@ export default function Relatorios() {
   };
 
   return (
-    <section className="workspace">
-      <div className="page-intro">
+    <section className="area-trabalho">
+      <div className="introducao-pagina">
         <div>
-          <p className="eyebrow">Operação</p>
+          <p className="titulo-pequeno">Operação</p>
           <h1>Relatórios</h1>
           <p>Gere visões rápidas para apoiar suas decisões.</p>
         </div>
       </div>
       {notice && <Notice text={notice} close={() => setNotice('')} />}
-      <div className="surface form-surface">
+      <div className="superficie superficie-formulario">
         <form onSubmit={generateReport}>
           <label>
             Loja
@@ -28,7 +28,7 @@ export default function Relatorios() {
             Tipo de relatório
             <select><option>Posição de estoque</option><option>Movimentações do período</option></select>
           </label>
-          <button className="primary" type="submit">Gerar relatório</button>
+          <button className="primario" type="submit">Gerar relatório</button>
         </form>
       </div>
     </section>

@@ -46,20 +46,20 @@ export default function CadastroPage() {
   };
 
   return (
-    <section className="workspace">
-      <div className="page-intro">
+    <section className="area-trabalho">
+      <div className="introducao-pagina">
         <div>
-          <p className="eyebrow">Cadastros</p>
+          <p className="titulo-pequeno">Cadastros</p>
           <h1>{config.title}</h1>
           <p>Gerencie os registros da operação.</p>
         </div>
-        <button className="primary" onClick={() => setForm({})}>
+        <button className="primario" onClick={() => setForm({})}>
           + Novo {config.singular}
         </button>
       </div>
 
-      <div className="surface table-surface">
-        <div className="table-toolbar">
+      <div className="superficie superficie-tabela">
+        <div className="barra-ferramentas-tabela">
           <div>
             <strong>{rows.length} registros</strong>
             <small>Atualizados localmente</small>
@@ -71,7 +71,7 @@ export default function CadastroPage() {
           />
         </div>
 
-        <div className="table-wrap">
+        <div className="envoltorio-tabela">
           <table>
             <thead>
               <tr>
@@ -85,13 +85,13 @@ export default function CadastroPage() {
                   {row.map((cell, cellIndex) => (
                     <td key={cellIndex}>
                       {cellIndex === 3 && tipo === 'produto' ? (
-                        <span className={`stock-tag ${Number(cell) === 0 ? 'empty' : Number(cell) < 10 ? 'low' : ''}`}>
+                        <span className={`etiqueta-estoque ${Number(cell) === 0 ? 'vazio' : Number(cell) < 10 ? 'baixo' : ''}`}>
                           {cell}
                         </span>
                       ) : cell}
                     </td>
                   ))}
-                  <td className="row-actions">
+                  <td className="acoes-linha">
                     <button onClick={() => edit(row)}>Editar</button>
                     <button onClick={() => remove(row)}>Excluir</button>
                   </td>
@@ -103,10 +103,10 @@ export default function CadastroPage() {
       </div>
 
       {(editing !== null || Object.keys(form).length > 0) && (
-        <div className="modal-layer">
-          <form className="modal-card" onSubmit={save}>
-            <button type="button" className="close" onClick={closeForm}>×</button>
-            <p className="eyebrow">{editing === null ? 'Novo registro' : 'Editar registro'}</p>
+        <div className="camada-modal">
+          <form className="cartao-modal" onSubmit={save}>
+            <button type="button" className="fechar" onClick={closeForm}>×</button>
+            <p className="titulo-pequeno">{editing === null ? 'Novo registro' : 'Editar registro'}</p>
             <h2>{editing === null ? `Cadastrar ${config.singular}` : `Editar ${config.singular}`}</h2>
 
             {config.fields.map((field, index) => (
@@ -119,7 +119,7 @@ export default function CadastroPage() {
                 />
               </label>
             ))}
-            <button className="primary" type="submit">Salvar registro</button>
+            <button className="primario" type="submit">Salvar registro</button>
           </form>
         </div>
       )}

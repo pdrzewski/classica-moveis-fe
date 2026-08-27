@@ -13,11 +13,11 @@ export default function Login() {
 
   return (
     <>
-      <div className="auth-logo">
+      <div className="logo-autenticacao">
         <img src={logo} alt="Logo da Clássica Móveis" />
       </div>
-      <div className="auth-container">
-        <div className="auth-card">
+      <div className="container-autenticacao">
+        <div className="cartao-autenticacao">
           <h1>Bem-vindo</h1>
           <p>Faça login para acessar sua conta</p>
           

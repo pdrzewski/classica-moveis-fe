@@ -1,11 +1,11 @@
-.form-surface {
+.superficie-formulario {
   width: 100%;
   max-width: 700px;
   padding: 31px;
 }
 
-.form-surface label,
-.modal-card label {
+.superficie-formulario label,
+.cartao-modal label {
   display: grid;
   gap: 7px;
   margin-bottom: 15px;
@@ -14,34 +14,34 @@
   font-weight: 700;
 }
 
-.form-surface select,
-.form-surface textarea,
-.modal-card input {
+.superficie-formulario select,
+.superficie-formulario textarea,
+.cartao-modal input {
   width: 100%;
   padding: 12px;
   border: 1px solid var(--line);
   outline: none;
 }
 
-.form-surface textarea {
+.superficie-formulario textarea {
   min-height: 130px;
   resize: vertical;
 }
 
-.direction {
+.direcao {
   display: flex;
   gap: 9px;
   margin-bottom: 25px;
 }
 
-.direction button {
+.direcao button {
   padding: 11px 15px;
   border: 1px solid var(--line);
   background: #fff;
   cursor: pointer;
 }
 
-.direction .selected {
+.direcao .selecionado {
   background: var(--ink);
   color: #fff;
 }
