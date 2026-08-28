@@ -1,5 +1,5 @@
 import { useNavigate, Link } from 'react-router-dom';
-import CadastroForm from '../components/CadastroForm';
+import CadastroForm from '../components/Cadastros/cadastro de funcionario/CadastroUsuario';
 import logo from '../assets/Clássica(1).png';
 import './Auth.css';
 

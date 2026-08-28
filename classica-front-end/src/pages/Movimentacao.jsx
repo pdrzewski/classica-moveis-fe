@@ -26,7 +26,7 @@ export default function Movimentacao() {
           </div>
           <label>
             Loja
-            <select><option>Clássica Centro</option><option>Clássica Norte</option></select>
+            <select><option>Selecione uma loja</option></select>
           </label>
           <label>
             Produtos e quantidades

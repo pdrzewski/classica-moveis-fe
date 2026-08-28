@@ -1,12 +1,19 @@
 import { useState } from 'react';
-import api from '../services/Api';
+import api from '../../../services/Api';
 
 export default function CadastroForm({ onSuccess }) {
   const [form, setForm] = useState({
-    usuario: '',
-    email: '',
-    nome: '',
-    senha: ''
+  nome: '',
+  cargoId: '',
+  usuarioId: '',
+  emFerias: '',
+  dataAdmissao: '',
+  dataNascimento: '',
+  salario: '',
+  carteiraTrabalho: '',
+  comissao: '',
+  estabelecimentoId: '',
+  cpf: ''
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -21,7 +28,7 @@ export default function CadastroForm({ onSuccess }) {
     setError('');
 
     try {
-      await api.post('/login/cadastrar', form);
+      await api.post('/colaboradores', form);
       onSuccess?.();
     } catch (err) {
       setError(err.response?.data?.message || 'Erro ao realizar o cadastro');
@@ -33,33 +40,33 @@ export default function CadastroForm({ onSuccess }) {
   return (
     <form onSubmit={handleSubmit}>
       <div className="grupo-entrada">
-        <label>Usuário</label>
-        <input
-          type="text"
-          name="usuario"
-          value={form.usuario}
-          onChange={handleChange}
-          required
-        />
-      </div>
-
-      <div className="grupo-entrada">
-        <label>E-mail</label>
-        <input
-          type="email"
-          name="email"
-          value={form.email}
-          onChange={handleChange}
-          required
-        />
-      </div>
-
-      <div className="grupo-entrada">
-        <label>Nome Completo</label>
+        <label>Nome</label>
         <input
           type="text"
           name="nome"
           value={form.nome}
+          onChange={handleChange}
+          required
+        />
+      </div>
+
+      <div className="grupo-entrada">
+        <label>Cargo</label>
+        <input
+          type="text"
+          name="cargo"
+          value={form.cargo}
+          onChange={handleChange}
+          required
+        />
+      </div>
+
+      <div className="grupo-entrada">
+        <label>data de admissão</label>
+        <input
+          type="date"
+          name="dataAdmissao"
+          value={form.dataAdmissao}
           onChange={handleChange}
           required
         />

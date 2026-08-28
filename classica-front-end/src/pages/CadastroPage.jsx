@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { cadastroConfigs } from './cadastroConfig';
 
@@ -6,15 +6,10 @@ export default function CadastroPage() {
   const { tipo } = useParams();
   const config = cadastroConfigs[tipo] || cadastroConfigs.produto;
   const [query, setQuery] = useState('');
-  const [rows, setRows] = useState(
-    () => JSON.parse(localStorage.getItem(`classica-${tipo}`) || 'null') || config.rows
-  );
+  const [rows, setRows] = useState([]);
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState({});
-  useEffect(() => {
-    localStorage.setItem(`classica-${tipo}`, JSON.stringify(rows));
-  }, [rows, tipo]);
-
+  const [modalAberto, setModalAberto] = useState(false);
   const visible = rows.filter((row) =>
     row.join(' ').toLowerCase().includes(query.toLowerCase())
   );
@@ -22,6 +17,7 @@ export default function CadastroPage() {
   const closeForm = () => {
     setEditing(null);
     setForm({});
+    setModalAberto(false);
   };
 
   const save = (event) => {
@@ -39,6 +35,7 @@ export default function CadastroPage() {
   const edit = (row) => {
     setEditing(rows.indexOf(row));
     setForm(Object.fromEntries(row.map((value, index) => [index, value])));
+    setModalAberto(true);
   };
 
   const remove = (row) => {
@@ -53,7 +50,11 @@ export default function CadastroPage() {
           <h1>{config.title}</h1>
           <p>Gerencie os registros da operação.</p>
         </div>
-        <button className="primario" onClick={() => setForm({})}>
+        <button className="primario" onClick={() => {
+          setEditing(null);
+          setForm({});
+          setModalAberto(true);
+        }}>
           + Novo {config.singular}
         </button>
       </div>
@@ -102,7 +103,7 @@ export default function CadastroPage() {
         </div>
       </div>
 
-      {(editing !== null || Object.keys(form).length > 0) && (
+      {modalAberto && (
         <div className="camada-modal">
           <form className="cartao-modal" onSubmit={save}>
             <button type="button" className="fechar" onClick={closeForm}>×</button>

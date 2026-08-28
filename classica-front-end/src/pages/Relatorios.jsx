@@ -22,7 +22,7 @@ export default function Relatorios() {
         <form onSubmit={generateReport}>
           <label>
             Loja
-            <select><option>Todas as lojas</option><option>Clássica Centro</option></select>
+            <select><option>Todas as lojas</option></select>
           </label>
           <label>
             Tipo de relatório
