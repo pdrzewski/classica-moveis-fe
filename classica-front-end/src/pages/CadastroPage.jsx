@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { cadastroConfigs } from './cadastroConfig';
+import CadastroUsuario from '../components/Cadastros/cadastro de funcionario/CadastroUsuario';
 
 export default function CadastroPage() {
   const { tipo } = useParams();
@@ -40,6 +41,10 @@ export default function CadastroPage() {
 
   const remove = (row) => {
     setRows(rows.filter((currentRow) => currentRow !== row));
+  };
+
+  const handleFuncionarioSuccess = () => {
+    closeForm();
   };
 
   return (
@@ -105,23 +110,32 @@ export default function CadastroPage() {
 
       {modalAberto && (
         <div className="camada-modal">
-          <form className="cartao-modal" onSubmit={save}>
-            <button type="button" className="fechar" onClick={closeForm}>×</button>
-            <p className="titulo-pequeno">{editing === null ? 'Novo registro' : 'Editar registro'}</p>
-            <h2>{editing === null ? `Cadastrar ${config.singular}` : `Editar ${config.singular}`}</h2>
+          {tipo === 'funcionario' ? (
+            <div className="cartao-modal">
+              <button type="button" className="fechar" onClick={closeForm}>×</button>
+              <p className="titulo-pequeno">Novo registro</p>
+              <h2>Cadastrar funcionário</h2>
+              <CadastroUsuario onSuccess={handleFuncionarioSuccess} />
+            </div>
+          ) : (
+            <form className="cartao-modal" onSubmit={save}>
+              <button type="button" className="fechar" onClick={closeForm}>×</button>
+              <p className="titulo-pequeno">{editing === null ? 'Novo registro' : 'Editar registro'}</p>
+              <h2>{editing === null ? `Cadastrar ${config.singular}` : `Editar ${config.singular}`}</h2>
 
-            {config.fields.map((field, index) => (
-              <label key={field}>
-                {field}
-                <input
-                  required
-                  value={form[index] || ''}
-                  onChange={(event) => setForm({ ...form, [index]: event.target.value })}
-                />
-              </label>
-            ))}
-            <button className="primario" type="submit">Salvar registro</button>
-          </form>
+              {config.fields.map((field, index) => (
+                <label key={field}>
+                  {field}
+                  <input
+                    required
+                    value={form[index] || ''}
+                    onChange={(event) => setForm({ ...form, [index]: event.target.value })}
+                  />
+                </label>
+              ))}
+              <button className="primario" type="submit">Salvar registro</button>
+            </form>
+          )}
         </div>
       )}
     </section>

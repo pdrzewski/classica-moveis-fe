@@ -1,6 +1,5 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Login from './pages/Login';
-import Cadastro from './pages/Cadastro';
 import Home from './pages/home';
 import AppLayout from './components/AppLayout';
 import CadastroPage from './pages/CadastroPage';
@@ -13,8 +12,7 @@ function App() {
   return (
     <Router>
       <Routes>
-        <Route path="/login" element={<Login />} />
-        <Route path="/cadastro" element={<Cadastro />} />
+        <Route path="/" element={<Login />} />
         <Route element={<AppLayout />}>
           <Route path="/home" element={<Home />} />
           <Route path="/cadastro/:tipo" element={<CadastroPage />} />
