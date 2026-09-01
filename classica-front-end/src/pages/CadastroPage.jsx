@@ -2,6 +2,17 @@ import { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { cadastroConfigs } from './cadastroConfig';
 import CadastroUsuario from '../components/Cadastros/cadastro de funcionario/CadastroUsuario';
+import CadastroFornecedora from '../components/Cadastros/cadastro de fornecedora/CadastroFornecedora';
+import CadastroEstabelecimento from '../components/Cadastros/cadastro de estabelecimento/CadastroEstabelecimento';
+
+const camposFornecedor = [
+  { key: 'nome', label: 'Nome' },
+  { key: 'cnpj', label: 'CNPJ' },
+  { key: 'representante', label: 'Representante' },
+  { key: 'telefone1', label: 'Telefone 1' },
+  { key: 'telefone2', label: 'Telefone 2' },
+  { key: 'enderecoId', label: 'Endereço (ID)' },
+];
 
 export default function CadastroPage() {
   const { tipo } = useParams();
@@ -23,7 +34,9 @@ export default function CadastroPage() {
 
   const save = (event) => {
     event.preventDefault();
-    const values = config.fields.map((_, index) => form[index] || 'Não informado');
+
+    const camposAtuais = tipo === 'fornecedora' ? camposFornecedor : config.fields.map((_, index) => ({ key: index }));
+    const values = camposAtuais.map((campo) => form[campo.key] || 'Não informado');
 
     setRows(
       editing === null
@@ -44,6 +57,14 @@ export default function CadastroPage() {
   };
 
   const handleFuncionarioSuccess = () => {
+    closeForm();
+  };
+
+  const handleFornecedoraSuccess = () => {
+    closeForm();
+  };
+
+  const handleEstabelecimentoSuccess = () => {
     closeForm();
   };
 
@@ -117,23 +138,43 @@ export default function CadastroPage() {
               <h2>Cadastrar funcionário</h2>
               <CadastroUsuario onSuccess={handleFuncionarioSuccess} />
             </div>
+          ) : tipo === 'fornecedora' ? (
+            <div className="cartao-modal">
+              <button type="button" className="fechar" onClick={closeForm}>×</button>
+              <p className="titulo-pequeno">Novo registro</p>
+              <h2>Cadastrar fornecedora</h2>
+              <CadastroFornecedora onSuccess={handleFornecedoraSuccess} />
+            </div>
+          ) : tipo === 'loja' || tipo === 'estabelecimento' ? (
+            <div className="cartao-modal">
+              <button type="button" className="fechar" onClick={closeForm}>×</button>
+              <p className="titulo-pequeno">Novo registro</p>
+              <h2>Cadastrar estabelecimento</h2>
+              <CadastroEstabelecimento onSuccess={handleEstabelecimentoSuccess} />
+            </div>
           ) : (
-            <form className="cartao-modal" onSubmit={save}>
+            <form className="cartao-modal modal-form-simples" onSubmit={save}>
               <button type="button" className="fechar" onClick={closeForm}>×</button>
               <p className="titulo-pequeno">{editing === null ? 'Novo registro' : 'Editar registro'}</p>
               <h2>{editing === null ? `Cadastrar ${config.singular}` : `Editar ${config.singular}`}</h2>
 
-              {config.fields.map((field, index) => (
-                <label key={field}>
-                  {field}
-                  <input
-                    required
-                    value={form[index] || ''}
-                    onChange={(event) => setForm({ ...form, [index]: event.target.value })}
-                  />
-                </label>
-              ))}
-              <button className="primario" type="submit">Salvar registro</button>
+              <div className="form-grid">
+                {(tipo === 'fornecedora' ? camposFornecedor : config.fields.map((field, index) => ({ key: index, label: field }))).map((campo) => (
+                  <div className="grupo-entrada" key={campo.key}>
+                    <label>{campo.label}</label>
+                    <input
+                      required={campo.key !== 'telefone2'}
+                      value={form[campo.key] || ''}
+                      onChange={(event) => setForm({ ...form, [campo.key]: event.target.value })}
+                    />
+                  </div>
+                ))}
+              </div>
+
+              <div className="form-acoes">
+                <button type="button" className="btn-cancelar" onClick={closeForm}>Cancelar</button>
+                <button className="primario" type="submit">Salvar registro</button>
+              </div>
             </form>
           )}
         </div>

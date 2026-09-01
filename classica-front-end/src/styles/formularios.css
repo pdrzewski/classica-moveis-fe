@@ -65,7 +65,8 @@
   margin: 0;
 }
 
-.form-cadastro-funcionario button {
+.form-cadastro-funcionario button,
+.modal-form-simples button {
   width: 100%;
 }
 
@@ -87,6 +88,14 @@
   background: #f3f4f6;
   color: var(--ink);
   border: 1px solid var(--line);
+}
+
+.modal-form-simples .form-grid {
+  margin-top: 8px;
+}
+
+.modal-form-simples .form-acoes {
+  margin-top: 18px;
 }
 
 .btn-confirmar-cancelamento {

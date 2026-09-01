@@ -9,7 +9,7 @@ export const cadastroConfigs = {
   },
   fornecedora: {
     title: 'Fornecedoras', singular: 'fornecedora',
-     fields: ['Razão social', 'CNPJ', 'Contato'],
+    fields: ['Nome', 'CNPJ', 'Representante', 'Telefone 1', 'Telefone 2', 'Endereço (ID)'],
   },
   produto: {
     title: 'Produtos', singular: 'produto',
@@ -17,6 +17,10 @@ export const cadastroConfigs = {
   },
   loja: {
     title: 'Lojas', singular: 'loja',
-     fields: ['Nome da loja', 'Endereço', 'Responsável'],
+    fields: ['Nome da loja', 'Endereço', 'Responsável'],
+  },
+  estabelecimento: {
+    title: 'Estabelecimentos', singular: 'estabelecimento',
+    fields: ['Nome', 'CNPJ', 'Telefone', 'Responsável'],
   },
 };
