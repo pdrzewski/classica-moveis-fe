@@ -1,23 +1,24 @@
 .introducao-pagina {
   display: flex;
-  align-items: flex-end;
+  align-items: end;
   justify-content: space-between;
-  gap: 25px;
-  margin-bottom: 34px;
+  gap: 20px;
+  margin-bottom: 28px;
 }
 
 .introducao-pagina h1 {
-  margin-bottom: 8px;
-  font-size: 34px;
-  letter-spacing: -0.02em;
+  margin: 0 0 8px;
+  font-size: clamp(2rem, 2.8vw, 2.5rem);
+  letter-spacing: -0.04em;
 }
 
 .introducao-pagina p:not(.titulo-pequeno) {
+  margin: 0;
   color: var(--muted);
 }
 
 .titulo-pequeno {
-  margin-bottom: 8px;
+  margin: 0 0 8px;
   color: var(--orange-dark);
   font-size: 11px;
   font-weight: 700;
@@ -25,21 +26,13 @@
   text-transform: uppercase;
 }
 
-.chip-data {
-  padding: 10px 13px;
-  border: 1px solid var(--line);
-  background: #fff;
-  color: var(--muted);
-  font-size: 12px;
-}
-
 .primario {
-  padding: 13px 17px;
+  padding: 12px 16px;
   border: 0;
   background: var(--ink);
   color: #fff;
-  cursor: pointer;
   font-weight: 700;
+  cursor: pointer;
 }
 
 .primario:hover {
@@ -48,37 +41,37 @@
 
 .grade-metrica {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 16px;
   margin-bottom: 22px;
 }
 
 .metrica {
   position: relative;
-  min-height: 155px;
-  padding: 21px;
+  min-height: 150px;
+  padding: 20px 18px;
   border: 1px solid var(--line);
   background: #fff;
 }
 
 .icone-metrica {
   position: absolute;
-  top: 19px;
-  right: 20px;
+  top: 18px;
+  right: 18px;
   color: var(--orange-dark);
-  font-size: 21px;
+  font-size: 20px;
 }
 
 .metrica p {
-  margin-bottom: 13px;
+  margin: 0 0 12px;
   color: var(--muted);
   font-size: 13px;
 }
 
 .metrica strong {
   display: block;
-  margin-bottom: 7px;
-  font-size: 34px;
+  margin-bottom: 8px;
+  font-size: clamp(1.8rem, 2vw, 2.4rem);
 }
 
 .metrica small {
@@ -105,66 +98,54 @@
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  padding: 24px 25px 12px;
+  gap: 16px;
+  padding: 24px 24px 16px;
 }
 
 .titulo-secao h2,
 .superficie-destaque h2 {
-  margin-bottom: 0;
+  margin: 0;
   font-size: 20px;
 }
 
 .crachá-contagem {
-  padding: 6px 10px;
-  background: #f3e7d3;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 7px 10px;
+  background: #f4ebdb;
   color: var(--orange-dark);
   font-size: 12px;
   font-weight: 700;
 }
 
-.linha-ferias {
-  display: flex;
-  align-items: center;
-  gap: 13px;
-  padding: 17px 25px;
-  border-top: 1px solid var(--line);
-}
-
-.linha-ferias div {
-  display: flex;
-  flex: 1;
-  flex-direction: column;
-  gap: 3px;
-}
-
-.linha-ferias small,
-.linha-ferias time {
+.conteudo-vazio {
+  padding: 0 24px 24px;
   color: var(--muted);
-  font-size: 12px;
-}
-
-.linha-ferias time {
-  color: var(--orange-dark);
 }
 
 .superficie-destaque {
-  padding: 26px;
-  background: #f0e6d5;
+  padding: 24px;
+  background: #f5efe5;
 }
 
 .links-rapidos {
   display: grid;
-  gap: 9px;
-  margin-top: 24px;
+  gap: 10px;
+  margin-top: 18px;
 }
 
 .links-rapidos a {
-  padding: 13px 14px;
-  background: #fffaf1;
+  display: block;
+  padding: 12px 14px;
+  background: #fff;
+  color: var(--ink);
   font-size: 13px;
   font-weight: 700;
+  text-decoration: none;
+  border: 1px solid rgba(0, 0, 0, 0.04);
 }
 
 .links-rapidos a:hover {
-  background: #fff;
+  background: #fffaf5;
 }

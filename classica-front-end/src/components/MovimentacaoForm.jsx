@@ -1,19 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import api from '../services/Api';
 
-const produtosExemplo = [
-  { id: 1, nome: 'Mesa de jantar', precoVenda: 899.9, unidadeMedida: 'un' },
-  { id: 2, nome: 'Sofá 3 lugares', precoVenda: 2499.0, unidadeMedida: 'un' },
-  { id: 3, nome: 'Cadeira', precoVenda: 429.0, unidadeMedida: 'un' },
-  { id: 4, nome: 'Guarda-roupa', precoVenda: 1899.0, unidadeMedida: 'un' },
-];
-
-const lojasExemplo = [
-  { id: 1, nome: 'Loja Centro' },
-  { id: 2, nome: 'Loja Norte' },
-  { id: 3, nome: 'Loja Sul' },
-];
-
 const listarDados = (resposta) => {
   const dados = resposta?.data;
 
@@ -42,11 +29,10 @@ export default function MovimentacaoForm() {
   const [tipoMovimentacao, setTipoMovimentacao] = useState('COMPRA');
   const [produtos, setProdutos] = useState([]);
   const [produtosFiltrados, setProdutosFiltrados] = useState([]);
-  const [lojas, setLojas] = useState(lojasExemplo);
+  const [lojas, setLojas] = useState([]);
   const [colaboradores, setColaboradores] = useState([]);
   const [itens, setItens] = useState([]);
   const [produtoBusca, setProdutoBusca] = useState('');
-  const [produtoSelecionado, setProdutoSelecionado] = useState('');
   const [motivo, setMotivo] = useState('');
   const [observacao, setObservacao] = useState('');
   const [dataMovimentacao, setDataMovimentacao] = useState('');
@@ -77,19 +63,19 @@ export default function MovimentacaoForm() {
     try {
       const resposta = await api.get('/produtos').catch(() => api.get('/api/produtos'));
       const lista = listarDados(resposta);
-      setProdutos(lista);
-
       const texto = termo.trim().toLowerCase();
-      const filtrados = !texto
-        ? lista
-        : lista.filter((produto) => {
-            const nome = String(produto?.nome || '').toLowerCase();
-            const sku = String(produto?.sku || '').toLowerCase();
-            const codigo = String(produto?.codigoBarras || '').toLowerCase();
-            return nome.includes(texto) || sku.includes(texto) || codigo.includes(texto);
-          });
 
-      setProdutosFiltrados(filtrados);
+      setProdutos(lista);
+      setProdutosFiltrados(
+        !texto
+          ? lista
+          : lista.filter((produto) => {
+              const nome = String(produto?.nome || '').toLowerCase();
+              const sku = String(produto?.sku || '').toLowerCase();
+              const codigo = String(produto?.codigoBarras || '').toLowerCase();
+              return nome.includes(texto) || sku.includes(texto) || codigo.includes(texto);
+            })
+      );
     } catch {
       setProdutos([]);
       setProdutosFiltrados([]);
@@ -150,15 +136,11 @@ export default function MovimentacaoForm() {
 
   const adicionarProduto = (produtoInformado = null) => {
     const candidatos = produtosFiltrados.length > 0 ? produtosFiltrados : produtos;
-    const produtoEncontrado = produtoInformado
-      ? produtoInformado
-      : produtoSelecionado
-        ? candidatos.find((produto) => String(produto.id) === String(produtoSelecionado))
-        : candidatos.find((produto) => {
-            const nome = String(produto?.nome || '').toLowerCase();
-            const busca = produtoBusca.trim().toLowerCase();
-            return nome === busca || nome.includes(busca);
-          });
+    const produtoEncontrado = produtoInformado || candidatos.find((produto) => {
+      const nome = String(produto?.nome || '').toLowerCase();
+      const busca = produtoBusca.trim().toLowerCase();
+      return nome === busca || nome.includes(busca);
+    });
 
     if (!produtoEncontrado) return;
 
@@ -188,7 +170,6 @@ export default function MovimentacaoForm() {
     }
 
     setProdutoBusca('');
-    setProdutoSelecionado('');
   };
 
   const alterarQuantidade = (produtoId, quantidade) => {
@@ -221,7 +202,6 @@ export default function MovimentacaoForm() {
     setTipoMovimentacao('COMPRA');
     setItens([]);
     setProdutoBusca('');
-    setProdutoSelecionado('');
     setMotivo('');
     setObservacao('');
     setDataMovimentacao('');
@@ -278,7 +258,6 @@ export default function MovimentacaoForm() {
       setDataMovimentacao('');
       setLojaSelecionada('');
       setProdutoBusca('');
-      setProdutoSelecionado('');
       setStatus('PENDENTE');
       setFormaPagamento('DINHEIRO');
     } catch (err) {
@@ -368,10 +347,7 @@ export default function MovimentacaoForm() {
             <div className="campo-busca-produto">
               <input
                 value={produtoBusca}
-                onChange={(event) => {
-                  setProdutoBusca(event.target.value);
-                  setProdutoSelecionado('');
-                }}
+                onChange={(event) => setProdutoBusca(event.target.value)}
                 onKeyDown={(event) => {
                   if (event.key !== 'Enter') return;
 
@@ -410,7 +386,6 @@ export default function MovimentacaoForm() {
                       className="sugestao-produto"
                       onClick={() => {
                         setProdutoBusca(produto?.nome || '');
-                        setProdutoSelecionado(String(produto?.id || ''));
                         adicionarProduto(produto);
                       }}
                     >

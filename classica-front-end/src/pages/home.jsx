@@ -1,39 +1,58 @@
+const metrics = [
+  { label: 'Produtos', value: '-', note: 'Sem dados', icon: '▦' },
+  { label: 'Estoque baixo', value: '-', note: 'Sem dados', icon: '!', warning: true },
+  { label: 'Movimentações', value: '-', note: 'Sem dados', icon: '⇄' },
+  { label: 'Lojas', value: '-', note: 'Sem dados', icon: '⌂' },
+];
+
+const quickLinks = [
+  { label: 'Cadastrar produto', to: '/cadastro/produto' },
+  { label: 'Registrar movimentação', to: '/movimentacao' },
+  { label: 'Consultar estoque', to: '/estoque' },
+];
+
 export default function Home() {
   return (
     <section className="painel">
-      <div className="introducao-pagina">
+      <header className="introducao-pagina">
         <div>
-          <p className="titulo-pequeno">Visão geral</p>
-          <h1>Bom dia, administrador</h1>
-          <p>Acompanhe a operação das suas lojas em um só lugar.</p>
+          <p className="titulo-pequeno">Resumo</p>
+          <h1>Dashboard</h1>
+          <p>Visão geral da operação do sistema.</p>
         </div>
-      </div>
+      </header>
 
       <div className="grade-metrica">
-        <Metric label="Produtos cadastrados" value="-" note="Aguardando dados" icon="▦" />
-        <Metric label="Estoque baixo" value="-" note="Aguardando dados" icon="!" warning />
-        <Metric label="Movimentações" value="-" note="Aguardando dados" icon="⇄" />
-        <Metric label="Lojas ativas" value="-" note="Aguardando dados" icon="⌂" />
+        {metrics.map((metric) => (
+          <Metric key={metric.label} {...metric} />
+        ))}
       </div>
 
       <div className="grade-inicio">
         <section className="superficie">
           <div className="titulo-secao">
-            <div><p className="titulo-pequeno">Equipe</p><h2>Funcionários de férias</h2></div>
+            <div>
+              <p className="titulo-pequeno">Equipe</p>
+              <h2>Funcionários em férias</h2>
+            </div>
             <span className="crachá-contagem">0</span>
           </div>
-          <p>Nenhum funcionário de férias cadastrado.</p>
-        </section>
 
-        <section className="superficie superficie-destaque">
-          <p className="titulo-pequeno">Acesso rápido</p>
-          <h2>O que você precisa fazer?</h2>
-          <div className="links-rapidos">
-            <a href="/cadastro/produto">+ Cadastrar produto</a>
-            <a href="/movimentacao">⇄ Registrar movimentação</a>
-            <a href="/estoque">▤ Consultar estoque</a>
+          <div className="conteudo-vazio">
+            <p>Nenhum registro no momento.</p>
           </div>
         </section>
+
+        <aside className="superficie superficie-destaque">
+          <p className="titulo-pequeno">Acesso rápido</p>
+          <h2>Atalhos</h2>
+
+          <div className="links-rapidos">
+            {quickLinks.map((link) => (
+              <a key={link.label} href={link.to}>{link.label}</a>
+            ))}
+          </div>
+        </aside>
       </div>
     </section>
   );

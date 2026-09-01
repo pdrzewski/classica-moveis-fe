@@ -1,178 +1,111 @@
 body {
-  background: #d8900a;
+  margin: 0;
+  background: #efe7dc;
   min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-direction: row;
 }
 
 #root {
-  display: flex;
-  width: 100%;
   min-height: 100vh;
-  align-items: center;
-  justify-content: space-between;
 }
 
 .logo-autenticacao {
-  flex: 1;
   display: flex;
-  align-items: center;
   justify-content: center;
-  padding: 32px;
+  padding: 32px 16px 12px;
 }
 
 .logo-autenticacao img {
-  display: block;
-  width: min(420px, 75%);
+  width: 180px;
   height: auto;
 }
 
-.container-autenticacao {  
-  width: 650px;
-  max-width: 650px;
-  height: 100vh;
-
+.container-autenticacao {
+  display: flex;
+  justify-content: center;
+  padding: 0 16px 48px;
 }
 
 .cartao-autenticacao {
-  background: white;
-  box-shadow: 0 20px 50px rgba(92, 52, 0, 0.35);
-  padding: 180px 50px;
-  text-align: center;
-  height: 100%;
-  align-items: center;
+  width: min(460px, 100%);
+  padding: 32px 28px;
+  background: #fff;
+  border: 1px solid #e5dfd4;
+  box-shadow: 0 12px 32px rgba(30, 25, 20, 0.06);
 }
 
 .cartao-autenticacao h1 {
-  color: #5c3900;
-  font-size: 2.6rem;
-  margin-bottom: 12px;
+  margin: 0 0 8px;
+  color: #1f1e1b;
+  font-size: 2rem;
 }
 
 .cartao-autenticacao p {
-  color: #555;
-  margin-bottom: 40px;
-  font-size: 1.1rem;
+  margin: 0 0 24px;
+  color: #66615a;
 }
 
 form {
   display: flex;
   flex-direction: column;
-  gap: 32px;
-  align-items: center;
-  justify-content: center;
+  gap: 20px;
 }
 
 .input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
   text-align: left;
 }
 
 .input-group label {
-  display: block;
-  color: #5c4700;
+  color: #4e4a43;
   font-weight: 600;
-  margin-bottom: 8px;
-  font-size: 1.05rem;
 }
 
 .input-group input {
   width: 100%;
-  padding: 10px 0;
-  border: none;
-  border-bottom: 2.5px solid #ccc;
-  background: transparent;
-  font-size: 1.1rem;
-  color: #333;
-  transition: all 0.3s ease;
+  padding: 10px 12px;
+  border: 1px solid #d9d2c8;
+  background: #fff;
+  font-size: 1rem;
+  box-sizing: border-box;
 }
 
 .input-group input:focus {
-  outline: none;
-  border-bottom-color: #cca806;
-  box-shadow: 0 3px 0 #b89817;
+  outline: 2px solid rgba(179, 128, 35, 0.18);
+  border-color: #c79c4a;
 }
 
 button {
-  background: linear-gradient(135deg, #FFB300, #FF9500);
-  color: #5c4500;
+  padding: 12px 16px;
+  border: 0;
+  background: #1f1e1b;
+  color: #fff;
   font-weight: 700;
-  padding: 16px 0;
-  border: none;
-  border-radius: 12px;
-  font-size: 1.15rem;
   cursor: pointer;
-  transition: all 0.3s ease;
-  margin-top: 20px;
-  box-shadow: 0 8px 20px rgba(255, 179, 0, 0.35);
-  width: 50%;
+  transition: opacity 0.2s ease;
 }
 
 button:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 15px 30px rgba(255, 179, 0, 0.45);
+  opacity: 0.94;
 }
 
 button:disabled {
-  opacity: 0.75;
-  cursor: not-allowed;
-  transform: none;
+  opacity: 0.7;
+  cursor: wait;
 }
 
 .erro {
-  color: #e74c3c;
-  background: #fdf2f2;
-  padding: 14px;
-  border-radius: 10px;
-  font-size: 1rem;
-  border-left: 5px solid #e74c3c;
-  text-align: left;
-  margin-top: 10px;
+  margin: 0;
+  padding: 10px 12px;
+  border: 1px solid #f2c7c3;
+  background: #fff5f4;
+  color: #9a2f2d;
+  font-size: 0.95rem;
 }
 
-.link-autenticacao {
-  margin-top: 35px;
-  color: #555;
-  font-size: 1.05rem;
-}
-
-.link-autenticacao a {
-  color: #FFB300;
-  font-weight: 600;
-  text-decoration: none;
-}
-
-.link-autenticacao a:hover {
-  color: #FF9500;
-  text-decoration: underline;
-}
-
-@media (max-width: 1024px) {
-  #root {
-    justify-content: center;
-  }
-
-  .logo-autenticacao {
-    display: none;
-  }
-
-  .container-autenticacao {
-    padding: 10px;
-    
-  }
-
+@media (max-width: 768px) {
   .cartao-autenticacao {
-    padding: 200px 50px;
-    border-radius: 20px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-  
+    padding: 24px 18px;
   }
-
-  .cartao-autenticacao h1 {
-    font-size: 2.2rem;
-  }
-
 }

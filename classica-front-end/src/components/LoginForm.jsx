@@ -1,4 +1,4 @@
-import { useState, Link } from 'react';
+import { useState } from 'react';
 import api from '../services/Api';
 import '../styles/formularios.css';
 
@@ -7,12 +7,15 @@ export default function LoginForm({ onSuccess }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+  const handleChange = (event) => {
+    setForm((atual) => ({
+      ...atual,
+      [event.target.name]: event.target.value,
+    }));
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const handleSubmit = async (event) => {
+    event.preventDefault();
     setLoading(true);
     setError('');
 
@@ -20,7 +23,7 @@ export default function LoginForm({ onSuccess }) {
       await api.post('/login', form);
       onSuccess?.();
     } catch (err) {
-      setError(err.response?.data?.message || 'Usuário ou senha incorretos');
+      setError(err.response?.data?.message || 'Usuário ou senha incorretos.');
     } finally {
       setLoading(false);
     }
@@ -29,10 +32,11 @@ export default function LoginForm({ onSuccess }) {
   return (
     <form onSubmit={handleSubmit}>
       <div className="input-group">
-        <label>Usuário</label>
+        <label htmlFor="login">Usuário</label>
         <input
-          type="text"
+          id="login"
           name="login"
+          type="text"
           value={form.login}
           onChange={handleChange}
           required
@@ -40,17 +44,18 @@ export default function LoginForm({ onSuccess }) {
       </div>
 
       <div className="input-group">
-        <label>Senha</label>
+        <label htmlFor="senha">Senha</label>
         <input
-          type="password"
+          id="senha"
           name="senha"
+          type="password"
           value={form.senha}
           onChange={handleChange}
           required
         />
       </div>
 
-      {error && <p className="error">{error}</p>}
+      {error && <p className="erro">{error}</p>}
 
       <button type="submit" disabled={loading}>
         {loading ? 'Entrando...' : 'Entrar'}
