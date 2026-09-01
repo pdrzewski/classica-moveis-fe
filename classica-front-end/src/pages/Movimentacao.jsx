@@ -1,40 +1,17 @@
-import { useState } from 'react';
-import { Notice } from './Estoque';
+import MovimentacaoForm from '../components/MovimentacaoForm';
 
 export default function Movimentacao() {
-  const [notice, setNotice] = useState('');
-  const saveMovement = (event) => {
-    event.preventDefault();
-    setNotice('Registro salvo com sucesso.');
-  };
-
   return (
     <section className="area-trabalho">
       <div className="introducao-pagina">
         <div>
           <p className="titulo-pequeno">Operação</p>
           <h1>Movimentação</h1>
-          <p>Registre entradas e saídas com rastreabilidade.</p>
+          <p>Registre entradas e saídas de itens com o motivo correspondente para manter o controle do estoque.</p>
         </div>
       </div>
-      {notice && <Notice text={notice} close={() => setNotice('')} />}
-      <div className="superficie superficie-formulario">
-        <form onSubmit={saveMovement}>
-          <div className="direcao">
-            <button type="button" className="selecionado">↑ Entrada</button>
-            <button type="button">↓ Saída</button>
-          </div>
-          <label>
-            Loja
-            <select><option>Selecione uma loja</option></select>
-          </label>
-          <label>
-            Produtos e quantidades
-            <textarea placeholder="Selecione os produtos e informe as quantidades..." />
-          </label>
-          <button className="primario" type="submit">Registrar movimentação</button>
-        </form>
-      </div>
+
+      <MovimentacaoForm />
     </section>
   );
 }

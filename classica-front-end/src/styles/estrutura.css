@@ -7,9 +7,11 @@
 }
 
 .barra-topo {
-  position: sticky;
+  position: fixed;
   top: 0;
-  z-index: 5;
+  left: 0;
+  right: 0;
+  z-index: 20;
   display: flex;
   align-items: center;
   gap: 22px;
@@ -105,8 +107,9 @@
 .barra-lateral {
   position: fixed;
   top: 82px;
+  left: 0;
   bottom: 0;
-  z-index: 4;
+  z-index: 15;
   display: flex;
   flex-direction: column;
   width: 244px;
@@ -204,7 +207,7 @@
 
 .conteudo-pagina {
   margin-left: 244px;
-  padding: 48px 5.5%;
+  padding: 130px 5.5% 48px;
   width: calc(100% - 244px);
   box-sizing: border-box;
 }

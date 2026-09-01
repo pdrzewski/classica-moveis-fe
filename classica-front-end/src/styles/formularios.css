@@ -1,31 +1,32 @@
 .superficie-formulario {
   width: 100%;
-  max-width: 700px;
-  padding: 31px;
+  max-width: 980px;
+  padding: 22px 26px;
 }
 
 .superficie-formulario label,
 .cartao-modal label {
   display: grid;
-  gap: 7px;
-  margin-bottom: 15px;
+  gap: 6px;
+  margin-bottom: 8px;
   color: var(--muted);
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 700;
 }
 
 .superficie-formulario select,
 .superficie-formulario textarea,
+.superficie-formulario input,
 .cartao-modal input,
 .cartao-modal select {
   width: 100%;
-  padding: 12px;
+  padding: 10px 12px;
   border: 1px solid var(--line);
   outline: none;
 }
 
 .superficie-formulario textarea {
-  min-height: 130px;
+  min-height: 90px;
   resize: vertical;
 }
 
@@ -112,14 +113,194 @@
   margin-top: 18px;
 }
 
+.movimentacao-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px 16px;
+  margin-top: 10px;
+}
+
+.movimentacao-grid.duas-colunas {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.movimentacao-grid.duas-colunas .campo {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.campo {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.bloco-produtos {
+  margin-top: 10px;
+}
+
+.linha-selecao-produto {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 120px;
+  gap: 12px;
+  align-items: start;
+}
+
+.campo-busca-produto {
+  position: relative;
+  min-width: 0;
+}
+
+.campo-busca-produto input {
+  min-width: 0;
+}
+
+.lista-sugestoes-produtos {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  right: 0;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 10px 28px rgba(23, 22, 16, 0.12);
+}
+
+.sugestao-produto {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  background: #fff;
+  color: var(--ink);
+  cursor: pointer;
+  text-align: left;
+}
+
+.sugestao-produto:hover {
+  background: #f9f3e9;
+  border-color: rgba(185, 142, 62, 0.35);
+}
+
+.sugestao-produto span {
+  font-weight: 600;
+}
+
+.sugestao-produto small {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.btn-secundario {
+  min-width: 120px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  background: #f5f5f5;
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.lista-vazia {
+  margin-top: 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #f7f7f7;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.lista-itens {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.item-movimentacao {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 90px 32px;
+  gap: 10px;
+  align-items: center;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #fff;
+}
+
+.item-movimentacao span {
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.item-movimentacao input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+}
+
+.btn-remover {
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--line);
+  background: #f8f4f4;
+  color: #a31212;
+  font-size: 18px;
+  cursor: pointer;
+}
+
+.resumo-movimentacao {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 10px 0 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #f7f7f7;
+  font-size: 15px;
+}
+
+.form-movimentacao {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(220px, 1fr));
+  gap: 12px 18px;
+  width: 100%;
+}
+
+.form-movimentacao .direcao,
+.form-movimentacao .bloco-produtos,
+.form-movimentacao .campo-observacao,
+.form-movimentacao .resumo-movimentacao,
+.form-movimentacao .primario {
+  grid-column: 1 / -1;
+}
+
+.form-movimentacao .campo {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
 .direcao {
   display: flex;
   gap: 9px;
-  margin-bottom: 25px;
+  margin-bottom: 0;
 }
 
 .direcao button {
-  padding: 11px 15px;
+  padding: 10px 14px;
   border: 1px solid var(--line);
   background: #fff;
   cursor: pointer;
@@ -128,4 +309,71 @@
 .direcao .selecionado {
   background: var(--ink);
   color: #fff;
+}
+
+.form-movimentacao .form-movimentacao .campo,
+.form-movimentacao .campo-observacao {
+  min-width: 0;
+}
+
+.form-movimentacao .campo-observacao textarea {
+  min-height: 82px;
+}
+
+.form-movimentacao .primario {
+  margin-top: 0;
+}
+
+.form-movimentacao .bloco-produtos {
+  margin-top: 0;
+}
+
+.form-movimentacao .campo-observacao textarea {
+  min-height: 82px;
+}
+
+.form-movimentacao .resumo-movimentacao {
+  margin: 0;
+}
+
+.form-movimentacao .primario {
+  width: 100%;
+}
+
+.acoes-movimentacao {
+  display: grid;
+  grid-column: 1 / -1;
+  align-items: center;
+}
+
+.topo-acoes {
+  margin-top: 0;
+  margin-bottom: 6px;
+  justify-items: start;
+}
+
+.rodape-acoes {
+  margin-top: 4px;
+}
+
+.rodape-acoes .primario {
+  width: 100%;
+}
+
+.btn-limpar {
+  padding: 11px 14px;
+  border: 1px solid var(--line);
+  background: #f4f1eb;
+  color: var(--ink);
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.btn-limpar:hover {
+  background: #efe8dc;
+}
+
+.form-movimentacao .primario {
+  margin-top: 0;
+  width: 100%;
 }
