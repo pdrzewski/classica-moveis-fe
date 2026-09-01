@@ -16,7 +16,8 @@
 
 .superficie-formulario select,
 .superficie-formulario textarea,
-.cartao-modal input {
+.cartao-modal input,
+.cartao-modal select {
   width: 100%;
   padding: 12px;
   border: 1px solid var(--line);
@@ -26,6 +27,80 @@
 .superficie-formulario textarea {
   min-height: 130px;
   resize: vertical;
+}
+
+.form-cadastro-funcionario {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px 16px;
+}
+
+.form-grid .grupo-entrada {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+}
+
+.form-grid .checkbox {
+  grid-column: 1 / -1;
+  margin-top: 4px;
+}
+
+.form-grid .checkbox label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+}
+
+.form-grid .checkbox input {
+  width: auto;
+  margin: 0;
+}
+
+.form-cadastro-funcionario button {
+  width: 100%;
+}
+
+.form-acoes {
+  display: flex;
+  gap: 12px;
+  margin-top: 6px;
+}
+
+.form-acoes button {
+  flex: 1;
+  min-height: 44px;
+  padding: 12px 16px;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.btn-cancelar {
+  background: #f3f4f6;
+  color: var(--ink);
+  border: 1px solid var(--line);
+}
+
+.btn-confirmar-cancelamento {
+  background: #b42318;
+  color: #fff;
+  border: 1px solid #b42318;
+}
+
+.confirm-modal .cartao-confirmacao {
+  width: min(420px, 100%);
+}
+
+.confirm-actions {
+  margin-top: 18px;
 }
 
 .direcao {

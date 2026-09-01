@@ -28,15 +28,15 @@
 
 .cartao-modal {
   position: relative;
-  width: min(530px, 100%);
-  max-height: 90vh;
-  overflow: auto;
-  padding: 31px;
+  width: min(680px, 100%);
+  max-height: none;
+  overflow: visible;
+  padding: 24px 26px 20px;
   background: #fff;
 }
 
 .cartao-modal h2 {
-  margin-bottom: 24px;
+  margin-bottom: 18px;
 }
 
 .cartao-modal .primario {
@@ -46,12 +46,34 @@
 
 .fechar {
   position: absolute;
-  top: 16px;
+  top: 1px;
   right: 18px;
   border: 0;
   background: none;
   cursor: pointer;
-  font-size: 25px;
+  font-size: 30px;
+  line-height: 1;
+  width: 35px;
+  height: 35px;
+  padding: 0;
+  display: grid;
+  place-items: center;
+}
+
+.confirm-modal .fechar {
+  position: absolute;
+  top: 1px;
+  right: 18px;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  font-size: 30px;
+  line-height: 1;
+  width: 35px;
+  height: 35px;
+  padding: 0;
+  display: grid;
+  place-items: center;
 }
 
 .aviso {
