@@ -4,6 +4,8 @@ import { cadastroConfigs } from './cadastroConfig';
 import CadastroUsuario from '../components/Cadastros/cadastro de funcionario/CadastroUsuario';
 import CadastroFornecedora from '../components/Cadastros/cadastro de fornecedora/CadastroFornecedora';
 import CadastroEstabelecimento from '../components/Cadastros/cadastro de estabelecimento/CadastroEstabelecimento';
+import CadastroCategoria from '../components/Cadastros/cadastro de categoria/CadastroCategoria';
+import CadastroProduto from '../components/Cadastros/cadastro de produto/CadastroProduto';
 
 const camposFornecedor = [
   { key: 'nome', label: 'Nome' },
@@ -65,6 +67,14 @@ export default function CadastroPage() {
   };
 
   const handleEstabelecimentoSuccess = () => {
+    closeForm();
+  };
+
+  const handleCategoriaSuccess = () => {
+    closeForm();
+  };
+
+  const handleProdutoSuccess = () => {
     closeForm();
   };
 
@@ -151,6 +161,20 @@ export default function CadastroPage() {
               <p className="titulo-pequeno">Novo registro</p>
               <h2>Cadastrar estabelecimento</h2>
               <CadastroEstabelecimento onSuccess={handleEstabelecimentoSuccess} />
+            </div>
+          ) : tipo === 'categoria' ? (
+            <div className="cartao-modal">
+              <button type="button" className="fechar" onClick={closeForm}>×</button>
+              <p className="titulo-pequeno">Novo registro</p>
+              <h2>Cadastrar categoria</h2>
+              <CadastroCategoria onSuccess={handleCategoriaSuccess} />
+            </div>
+          ) : tipo === 'produto' ? (
+            <div className="cartao-modal">
+              <button type="button" className="fechar" onClick={closeForm}>×</button>
+              <p className="titulo-pequeno">Novo registro</p>
+              <h2>Cadastrar produto</h2>
+              <CadastroProduto onSuccess={handleProdutoSuccess} />
             </div>
           ) : (
             <form className="cartao-modal modal-form-simples" onSubmit={save}>
