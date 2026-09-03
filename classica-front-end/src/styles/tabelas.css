@@ -58,6 +58,22 @@ td {
   font-size: 13px;
 }
 
+tbody tr {
+  cursor: pointer;
+  transition: background 140ms ease;
+}
+
+tbody tr:hover {
+  background: #faf7f0;
+}
+
+.tabela-vazia {
+  margin: 0;
+  padding: 26px 12px 4px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
 .acoes-linha {
   white-space: nowrap;
 }

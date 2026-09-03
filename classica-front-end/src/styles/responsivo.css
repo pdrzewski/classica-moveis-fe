@@ -291,6 +291,10 @@
     margin-bottom: 15px;
   }
 
+  .detalhes-grid {
+    grid-template-columns: 1fr;
+  }
+
   .fechar {
     font-size: 20px;
     top: 12px;
