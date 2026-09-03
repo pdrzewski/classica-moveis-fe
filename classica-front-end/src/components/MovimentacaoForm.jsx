@@ -10,23 +10,9 @@ const listarDados = (resposta) => {
   return [];
 };
 
-const tiposPorDirecao = {
-  ENTRADA: [
-    { value: 'COMPRA', label: 'Compra' },
-    { value: 'DEVOLUCAO_CLIENTE', label: 'Devolução do cliente' },
-    { value: 'AJUSTE_ENTRADA', label: 'Ajuste de entrada' },
-  ],
-  SAIDA: [
-    { value: 'VENDA', label: 'Venda' },
-    { value: 'QUEBRA', label: 'Quebra' },
-    { value: 'DEVOLUCAO_FORNECEDOR', label: 'Devolução ao fornecedor' },
-    { value: 'AJUSTE_SAIDA', label: 'Ajuste de saída' },
-  ],
-};
-
-export default function MovimentacaoForm() {
-  const [direcao, setDirecao] = useState('ENTRADA');
-  const [tipoMovimentacao, setTipoMovimentacao] = useState('COMPRA');
+export default function MovimentacaoForm({ tipoInicial = 'COMPRA', tipoLabel = tipoInicial, direcaoInicial = 'ENTRADA' }) {
+  const [direcao, setDirecao] = useState(direcaoInicial);
+  const [tipoMovimentacao, setTipoMovimentacao] = useState(tipoInicial);
   const [produtos, setProdutos] = useState([]);
   const [produtosFiltrados, setProdutosFiltrados] = useState([]);
   const [lojas, setLojas] = useState([]);
@@ -42,8 +28,6 @@ export default function MovimentacaoForm() {
   const [status, setStatus] = useState('PENDENTE');
   const [loading, setLoading] = useState(false);
   const [notice, setNotice] = useState('');
-
-  const tiposDisponiveis = tiposPorDirecao[direcao] || tiposPorDirecao.ENTRADA;
 
   const produtosSugeridos = useMemo(() => {
     const texto = produtoBusca.trim().toLowerCase();
@@ -126,14 +110,6 @@ export default function MovimentacaoForm() {
     }, 0);
   }, [itens, produtos]);
 
-  const selecionarDirecao = (novaDirecao) => {
-    setDirecao(novaDirecao);
-    const opcaoPadrao = tiposPorDirecao[novaDirecao]?.[0]?.value;
-    if (opcaoPadrao) {
-      setTipoMovimentacao(opcaoPadrao);
-    }
-  };
-
   const adicionarProduto = (produtoInformado = null) => {
     const candidatos = produtosFiltrados.length > 0 ? produtosFiltrados : produtos;
     const produtoEncontrado = produtoInformado || candidatos.find((produto) => {
@@ -198,8 +174,8 @@ export default function MovimentacaoForm() {
   };
 
   const limparFormulario = () => {
-    setDirecao('ENTRADA');
-    setTipoMovimentacao('COMPRA');
+    setDirecao(direcaoInicial);
+    setTipoMovimentacao(tipoInicial);
     setItens([]);
     setProdutoBusca('');
     setMotivo('');
@@ -276,33 +252,10 @@ export default function MovimentacaoForm() {
           </button>
         </div>
 
-        <div className="direcao" aria-label="Tipo de movimentação">
-          <button
-            type="button"
-            className={direcao === 'ENTRADA' ? 'selecionado' : ''}
-            onClick={() => selecionarDirecao('ENTRADA')}
-          >
-            ↑ Entrada
-          </button>
-          <button
-            type="button"
-            className={direcao === 'SAIDA' ? 'selecionado' : ''}
-            onClick={() => selecionarDirecao('SAIDA')}
-          >
-            ↓ Saída
-          </button>
-        </div>
-
         <div className="movimentacao-grid duas-colunas">
           <div className="campo">
-            <label>Tipo</label>
-            <select value={tipoMovimentacao} onChange={(event) => setTipoMovimentacao(event.target.value)}>
-              {tiposDisponiveis.map((tipo) => (
-                <option key={tipo.value} value={tipo.value}>
-                  {tipo.label}
-                </option>
-              ))}
-            </select>
+            <label>Tipo de movimentação</label>
+            <input value={tipoLabel} readOnly />
           </div>
 
           <div className="campo">

@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Navigate, Routes, Route } from 'react-router-dom';
 import Login from './pages/Login';
 import Home from './pages/home';
 import AppLayout from './components/AppLayout';
@@ -17,7 +17,8 @@ export default function App() {
           <Route path="/home" element={<Home />} />
           <Route path="/cadastro/:tipo" element={<CadastroPage />} />
           <Route path="/estoque" element={<Estoque />} />
-          <Route path="/movimentacao" element={<Movimentacao />} />
+          <Route path="/movimentacao" element={<Navigate to="/movimentacao/compra" replace />} />
+          <Route path="/movimentacao/:tipo" element={<Movimentacao />} />
           <Route path="/historico" element={<Historico />} />
           <Route path="/relatorios" element={<Relatorios />} />
         </Route>

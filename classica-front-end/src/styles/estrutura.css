@@ -169,7 +169,16 @@
 }
 
 .submenu.expandido {
-  max-height: 260px;
+  max-height: 360px;
+}
+
+.submenu-grupo-titulo {
+  display: block;
+  padding: 10px 14px 4px 49px;
+  color: #687064;
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
 }
 
 .submenu a {

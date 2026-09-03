@@ -47,16 +47,18 @@
 .fechar {
   position: absolute;
   top: 1px;
-  right: 18px;
-  border: 0;
+  right: 5px;
+  border-color: #a16c35;
   background: none;
   cursor: pointer;
   font-size: 30px;
-  line-height: 1;
-  width: 35px;
-  height: 35px;
+  color: #a16c35;
+  line-height: 0;
+  width: 45px;
+  height: 45px;
   padding: 0;
   display: grid;
+  font-size:xx-large;
   place-items: center;
 }
 

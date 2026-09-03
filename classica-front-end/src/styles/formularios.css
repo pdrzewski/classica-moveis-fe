@@ -258,6 +258,8 @@
   color: #a31212;
   font-size: 18px;
   cursor: pointer;
+  display: grid;
+  place-items: center;
 }
 
 .resumo-movimentacao {
