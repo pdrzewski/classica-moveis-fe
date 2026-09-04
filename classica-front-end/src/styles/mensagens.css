@@ -160,3 +160,72 @@
   color: var(--green);
   font-size: 13px;
 }
+
+@media (max-width: 900px) {
+  .camada-modal {
+    padding: 12px;
+  }
+
+  .cartao-modal {
+    padding: 24px 18px;
+  }
+
+  .linha-historico {
+    align-items: flex-start;
+  }
+
+  .linha-historico b {
+    max-width: 78px;
+    text-align: right;
+  }
+}
+
+@media (max-width: 480px) {
+  .cartao-modal {
+    width: 90vw;
+    padding: 20px;
+    border-radius: 8px;
+  }
+
+  .cartao-modal h2 {
+    margin-bottom: 15px;
+    font-size: 18px;
+  }
+
+  .detalhes-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .fechar {
+    top: 12px;
+    right: 12px;
+    font-size: 20px;
+  }
+
+  .etiqueta-estoque {
+    padding: 4px 6px;
+    font-size: 10px;
+  }
+
+  .linha-historico {
+    gap: 10px;
+    padding: 12px 0;
+  }
+
+  .icone-historico {
+    width: 28px;
+    height: 28px;
+    font-size: 12px;
+  }
+
+  .linha-historico b {
+    max-width: none;
+    font-size: 12px;
+  }
+
+  .aviso {
+    margin-bottom: 12px;
+    padding: 10px 12px;
+    font-size: 12px;
+  }
+}

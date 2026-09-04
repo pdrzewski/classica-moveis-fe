@@ -1,0 +1,99 @@
+.form-cadastro-funcionario {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px 16px;
+}
+
+.form-grid .grupo-entrada {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+}
+
+.form-grid .checkbox {
+  grid-column: 1 / -1;
+  margin-top: 4px;
+}
+
+.form-grid .checkbox label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+}
+
+.form-grid .checkbox input {
+  width: auto;
+  margin: 0;
+}
+
+.form-cadastro-funcionario button,
+.modal-form-simples button {
+  width: 100%;
+}
+
+.form-acoes {
+  display: flex;
+  gap: 12px;
+  margin-top: 6px;
+}
+
+.form-acoes button {
+  flex: 1;
+  min-height: 44px;
+  padding: 12px 16px;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.btn-cancelar {
+  background: #f3f4f6;
+  color: var(--ink);
+  border: 1px solid var(--line);
+}
+
+.modal-form-simples .form-grid {
+  margin-top: 8px;
+}
+
+.modal-form-simples .form-acoes {
+  margin-top: 18px;
+}
+
+.btn-confirmar-cancelamento {
+  background: #b42318;
+  color: #fff;
+  border: 1px solid #b42318;
+}
+
+.confirm-modal .cartao-confirmacao {
+  width: min(420px, 100%);
+}
+
+.confirm-actions {
+  margin-top: 18px;
+}
+
+@media (max-width: 480px) {
+  .grupo-entrada {
+    margin-bottom: 12px;
+    text-align: left;
+  }
+
+  .grupo-entrada label {
+    margin-bottom: 6px;
+    font-size: 13px;
+  }
+
+  .grupo-entrada input {
+    padding: 8px;
+    font-size: 14px;
+  }
+}

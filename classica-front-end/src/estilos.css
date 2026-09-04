@@ -3,5 +3,7 @@
 @import './styles/inicio.css';
 @import './styles/tabelas.css';
 @import './styles/formularios.css';
+@import './styles/cadastros.css';
+@import './styles/movimentacao.css';
 @import './styles/mensagens.css';
 @import './styles/responsivo.css';

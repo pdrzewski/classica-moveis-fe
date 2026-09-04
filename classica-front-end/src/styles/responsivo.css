@@ -113,26 +113,6 @@
     min-width: 0;
   }
 
-  .camada-modal {
-    padding: 12px;
-  }
-
-  .cartao-modal {
-    padding: 24px 18px;
-  }
-
-  .superficie-formulario {
-    padding: 22px;
-  }
-
-  .linha-historico {
-    align-items: flex-start;
-  }
-
-  .linha-historico b {
-    max-width: 78px;
-    text-align: right;
-  }
 }
 
 /* Celulares e abaixo */
@@ -280,45 +260,6 @@
     margin-right: 5px;
   }
 
-  .cartao-modal {
-    width: 90vw;
-    padding: 20px;
-    border-radius: 8px;
-  }
-
-  .cartao-modal h2 {
-    font-size: 18px;
-    margin-bottom: 15px;
-  }
-
-  .detalhes-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .fechar {
-    font-size: 20px;
-    top: 12px;
-    right: 12px;
-  }
-
-  .superficie-formulario {
-    width: 100%;
-    max-width: none;
-    padding: 15px;
-  }
-
-  .direcao {
-    flex-direction: column;
-    gap: 8px;
-    margin-bottom: 15px;
-  }
-
-  .direcao button {
-    width: 100%;
-    padding: 10px;
-    font-size: 14px;
-  }
-
   .links-rapidos {
     gap: 8px;
     margin-top: 15px;
@@ -338,48 +279,6 @@
     width: 100%;
     padding: 12px;
     font-size: 14px;
-  }
-
-  .aviso {
-    padding: 10px 12px;
-    font-size: 12px;
-    margin-bottom: 12px;
-  }
-
-  .grupo-entrada {
-    text-align: left;
-    margin-bottom: 12px;
-  }
-
-  .grupo-entrada label {
-    font-size: 13px;
-    margin-bottom: 6px;
-  }
-
-  .grupo-entrada input {
-    font-size: 14px;
-    padding: 8px;
-  }
-
-  .etiqueta-estoque {
-    font-size: 10px;
-    padding: 4px 6px;
-  }
-
-  .linha-historico {
-    padding: 12px 0;
-    gap: 10px;
-  }
-
-  .icone-historico {
-    width: 28px;
-    height: 28px;
-    font-size: 12px;
-  }
-
-  .linha-historico b {
-    max-width: none;
-    font-size: 12px;
   }
 
   .titulo-pequeno {

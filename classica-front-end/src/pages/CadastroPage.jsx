@@ -1,7 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { cadastroConfigs } from './cadastroConfig';
-import api from '../services/Api';
+import { carregarDadosDaTabela } from '../services/cadastroTabelaService';
 import CadastroUsuario from '../components/Cadastros/cadastro de funcionario/CadastroUsuario';
 import CadastroFornecedora from '../components/Cadastros/cadastro de fornecedora/CadastroFornecedora';
 import CadastroEstabelecimento from '../components/Cadastros/cadastro de estabelecimento/CadastroEstabelecimento';
@@ -9,7 +9,7 @@ import CadastroCategoria from '../components/Cadastros/cadastro de categoria/Cad
 import CadastroProduto from '../components/Cadastros/cadastro de produto/CadastroProduto';
 
 const labels = {
-  nome: 'Nome', login: 'Login', senha: 'Senha', cargoId: 'Cargo', cpf: 'CPF',
+  nome: 'Nome', cargoId: 'Cargo', cpf: 'CPF',
   dataAdmissao: 'Data de admissão', dataNascimento: 'Data de nascimento', salario: 'Salário',
   carteiraTrabalho: 'Carteira de trabalho', comissao: 'Comissão (%)', estabelecimentoId: 'Estabelecimento',
   emFerias: 'Em férias', categoria: 'Categoria', cnpj: 'CNPJ', representante: 'Representante',
@@ -56,35 +56,24 @@ export default function CadastroPage() {
     config.fields.map((field) => mostrarValor(row, field, referencias)).join(' ').toLowerCase().includes(query.toLowerCase())
   );
 
-  const carregarRegistros = async () => {
+  const carregarRegistros = useCallback(async () => {
     setCarregando(true);
     setErro('');
     try {
-      const resposta = await api.get(config.endpoint).catch(() => api.get(`/api${config.endpoint}`));
-      const dados = resposta?.data;
-      setRows(Array.isArray(dados) ? dados : dados?.content || dados?.dados || []);
-      const relacoes = Object.entries(config.relations || {});
-      const resultados = await Promise.all(relacoes.map(async ([campo, endpoint]) => {
-        try {
-          const relacao = await api.get(endpoint).catch(() => api.get(`/api${endpoint}`));
-          const relacaoDados = relacao?.data;
-          return [campo, Array.isArray(relacaoDados) ? relacaoDados : relacaoDados?.content || relacaoDados?.dados || []];
-        } catch {
-          return [campo, []];
-        }
-      }));
-      setReferencias(Object.fromEntries(resultados));
+      const { registros, referencias: novasReferencias } = await carregarDadosDaTabela(config);
+      setRows(registros);
+      setReferencias(novasReferencias);
     } catch (err) {
       setRows([]);
       setErro(err.response?.data?.message || 'Não foi possível carregar os registros.');
     } finally {
       setCarregando(false);
     }
-  };
+  }, [config]);
 
   useEffect(() => {
     carregarRegistros();
-  }, [tipo]);
+  }, [carregarRegistros]);
 
   const closeForm = () => {
     setModalAberto(false);
