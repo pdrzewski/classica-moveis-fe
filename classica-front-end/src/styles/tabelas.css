@@ -86,3 +86,18 @@ tbody tr:hover {
   cursor: pointer;
   font-size: 12px;
 }
+
+.texto-secundario {
+  display: block;
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.tabela-estoque {
+  min-width: 980px;
+}
+
+.tabela-estoque td strong {
+  font-weight: 700;
+}

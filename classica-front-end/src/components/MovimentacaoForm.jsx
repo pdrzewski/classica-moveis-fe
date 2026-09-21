@@ -10,7 +10,7 @@ const listarDados = (resposta) => {
   return [];
 };
 
-export default function MovimentacaoForm({ tipoInicial = 'COMPRA', tipoLabel = tipoInicial, direcaoInicial = 'ENTRADA' }) {
+export default function MovimentacaoForm({ tipoInicial = 'COMPRA', tipoLabel = tipoInicial, direcaoInicial = 'ENTRADA', transferencia = false }) {
   const [direcao, setDirecao] = useState(direcaoInicial);
   const [tipoMovimentacao, setTipoMovimentacao] = useState(tipoInicial);
   const [produtos, setProdutos] = useState([]);
@@ -24,6 +24,8 @@ export default function MovimentacaoForm({ tipoInicial = 'COMPRA', tipoLabel = t
   const [observacao, setObservacao] = useState('');
   const [dataMovimentacao, setDataMovimentacao] = useState('');
   const [lojaSelecionada, setLojaSelecionada] = useState('');
+  const [lojaOrigemId, setLojaOrigemId] = useState('');
+  const [lojaDestinoId, setLojaDestinoId] = useState('');
   const [colaboradorId, setColaboradorId] = useState('');
   const [clienteId, setClienteId] = useState('');
   const [formaPagamento, setFormaPagamento] = useState('DINHEIRO');
@@ -86,6 +88,8 @@ export default function MovimentacaoForm({ tipoInicial = 'COMPRA', tipoLabel = t
           if (!lojaSelecionada) {
             setLojaSelecionada(String(lojasCarregadas[0].id));
           }
+          if (!lojaOrigemId) setLojaOrigemId(String(lojasCarregadas[0].id));
+          if (!lojaDestinoId) setLojaDestinoId(String(lojasCarregadas[1]?.id || lojasCarregadas[0].id));
         }
 
         if (colaboradoresCarregados.length) {
@@ -193,6 +197,8 @@ export default function MovimentacaoForm({ tipoInicial = 'COMPRA', tipoLabel = t
     setObservacao('');
     setDataMovimentacao('');
     setLojaSelecionada(lojas[0] ? String(lojas[0].id) : '');
+    setLojaOrigemId(lojas[0] ? String(lojas[0].id) : '');
+    setLojaDestinoId(lojas[1] ? String(lojas[1].id) : lojas[0] ? String(lojas[0].id) : '');
     setColaboradorId(colaboradores[0] ? String(colaboradores[0].id) : '');
     setClienteId(clientes[0] ? String(clientes[0].id) : '');
     setFormaPagamento('DINHEIRO');
@@ -208,21 +214,29 @@ export default function MovimentacaoForm({ tipoInicial = 'COMPRA', tipoLabel = t
     const colaboradorSelecionado = colaboradores.find((colaborador) => Number(colaborador.id) === Number(colaboradorId));
     const clienteSelecionado = clientes.find((cliente) => Number(cliente.id) === Number(clienteId));
     const lojaAtual = lojas.find((loja) => Number(loja.id) === Number(lojaSelecionada));
+    const lojaOrigem = lojas.find((loja) => Number(loja.id) === Number(lojaOrigemId));
+    const lojaDestino = lojas.find((loja) => Number(loja.id) === Number(lojaDestinoId));
+
+    if (transferencia && (!lojaOrigemId || !lojaDestinoId || lojaOrigemId === lojaDestinoId)) {
+      setNotice('Selecione duas lojas diferentes para realizar a transferência.');
+      setLoading(false);
+      return;
+    }
 
     const payload = {
       id: Date.now(),
       dataHora: dataMovimentacao ? new Date(`${dataMovimentacao}T00:00:00`).toISOString() : new Date().toISOString(),
       tipoMovimentacao,
       status: 'PENDENTE',
-      formaPagamento,
+      formaPagamento: tipoMovimentacao === 'COMPRA' ? formaPagamento : 'NAO_APLICAVEL',
       observacao,
       valorTotal: Number(valorTotal.toFixed(2)),
       colaboradorId: Number(colaboradorId || colaboradorSelecionado?.id || 1),
       colaboradorNome: colaboradorSelecionado?.nome || 'Usuário atual',
-      estabelecimentoOrigemId: direcao === 'SAIDA' ? Number(lojaSelecionada || lojaAtual?.id || 1) : 1,
-      estabelecimentoOrigemNome: direcao === 'SAIDA' ? (lojaAtual?.nome || 'Loja atual') : 'Estoque principal',
-      estabelecimentoDestinoId: direcao === 'ENTRADA' ? Number(lojaSelecionada || lojaAtual?.id || 1) : 1,
-      estabelecimentoDestinoNome: direcao === 'ENTRADA' ? (lojaAtual?.nome || 'Loja atual') : 'Estoque principal',
+      estabelecimentoOrigemId: transferencia ? Number(lojaOrigemId) : direcao === 'SAIDA' ? Number(lojaSelecionada || lojaAtual?.id || 1) : 1,
+      estabelecimentoOrigemNome: transferencia ? (lojaOrigem?.nome || lojaOrigem?.titulo || 'Loja de origem') : direcao === 'SAIDA' ? (lojaAtual?.nome || 'Loja atual') : 'Estoque principal',
+      estabelecimentoDestinoId: transferencia ? Number(lojaDestinoId) : direcao === 'ENTRADA' ? Number(lojaSelecionada || lojaAtual?.id || 1) : 1,
+      estabelecimentoDestinoNome: transferencia ? (lojaDestino?.nome || lojaDestino?.titulo || 'Loja de destino') : direcao === 'ENTRADA' ? (lojaAtual?.nome || 'Loja atual') : 'Estoque principal',
       clienteId: tipoMovimentacao === 'COMPRA' ? Number(clienteId || clienteSelecionado?.id || null) : null,
       clienteNome: tipoMovimentacao === 'COMPRA' ? (clienteSelecionado?.nome || '') : '',
       fornecedorId: null,
@@ -299,17 +313,32 @@ export default function MovimentacaoForm({ tipoInicial = 'COMPRA', tipoLabel = t
         </div>
 
         <div className="movimentacao-grid duas-colunas">
-          <div className="campo">
-            <label>Loja</label>
-            <select value={lojaSelecionada} onChange={(event) => setLojaSelecionada(event.target.value)}>
-              <option value="">Selecione a loja</option>
-              {lojas.map((loja) => (
-                <option key={loja.id} value={loja.id}>
-                  {loja.nome || loja.titulo || `Loja ${loja.id}`}
-                </option>
-              ))}
-            </select>
-          </div>
+          {transferencia ? (
+            <>
+              <div className="campo">
+                <label>Loja de origem</label>
+                <select value={lojaOrigemId} onChange={(event) => setLojaOrigemId(event.target.value)}>
+                  <option value="">Selecione a loja de origem</option>
+                  {lojas.map((loja) => <option key={loja.id} value={loja.id}>{loja.nome || loja.titulo || `Loja ${loja.id}`}</option>)}
+                </select>
+              </div>
+              <div className="campo">
+                <label>Loja de destino</label>
+                <select value={lojaDestinoId} onChange={(event) => setLojaDestinoId(event.target.value)}>
+                  <option value="">Selecione a loja de destino</option>
+                  {lojas.map((loja) => <option key={loja.id} value={loja.id}>{loja.nome || loja.titulo || `Loja ${loja.id}`}</option>)}
+                </select>
+              </div>
+            </>
+          ) : (
+            <div className="campo">
+              <label>Loja</label>
+              <select value={lojaSelecionada} onChange={(event) => setLojaSelecionada(event.target.value)}>
+                <option value="">Selecione a loja</option>
+                {lojas.map((loja) => <option key={loja.id} value={loja.id}>{loja.nome || loja.titulo || `Loja ${loja.id}`}</option>)}
+              </select>
+            </div>
+          )}
 
           <div className="campo">
             <label>Data</label>
@@ -411,16 +440,18 @@ export default function MovimentacaoForm({ tipoInicial = 'COMPRA', tipoLabel = t
             />
           </div>
 
-          <div className="campo">
-            <label>Forma de pagamento</label>
-            <select value={formaPagamento} onChange={(event) => setFormaPagamento(event.target.value)}>
-              <option value="DINHEIRO">Dinheiro</option>
-              <option value="CARTAO">Cartão</option>
-              <option value="PIX">PIX</option>
-              <option value="BOLETO">Boleto</option>
-              <option value="CREDITO">Crédito</option>
-            </select>
-          </div>
+          {tipoMovimentacao === 'COMPRA' && (
+            <div className="campo">
+              <label>Forma de pagamento</label>
+              <select value={formaPagamento} onChange={(event) => setFormaPagamento(event.target.value)}>
+                <option value="DINHEIRO">Dinheiro</option>
+                <option value="CARTAO">Cartão</option>
+                <option value="PIX">PIX</option>
+                <option value="BOLETO">Boleto</option>
+                <option value="CREDITO">Crédito</option>
+              </select>
+            </div>
+          )}
         </div>
 
         <div className="campo campo-observacao">
@@ -446,10 +477,12 @@ export default function MovimentacaoForm({ tipoInicial = 'COMPRA', tipoLabel = t
           </div>
         </div>
 
-        <div className="resumo-movimentacao">
-          <strong>Total:</strong>
-          <span>R$ {valorTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-        </div>
+        {tipoMovimentacao === 'COMPRA' && (
+          <div className="resumo-movimentacao">
+            <strong>Total:</strong>
+            <span>R$ {valorTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+          </div>
+        )}
 
         {notice && <div className="aviso">{notice}</div>}
 

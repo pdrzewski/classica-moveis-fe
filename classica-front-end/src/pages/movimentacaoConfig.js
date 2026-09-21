@@ -6,6 +6,7 @@ export const movimentacaoConfigs = {
   quebra: { value: 'QUEBRA', label: 'Quebra', direcao: 'SAIDA' },
   'devolucao-fornecedor': { value: 'DEVOLUCAO_FORNECEDOR', label: 'Devolução ao fornecedor', direcao: 'SAIDA' },
   'ajuste-saida': { value: 'AJUSTE_SAIDA', label: 'Ajuste de saída', direcao: 'SAIDA' },
+  transferencia: { value: 'TRANSFERENCIA', label: 'Transferência entre lojas', direcao: 'TRANSFERENCIA' },
 };
 
 export const movimentacaoItems = Object.entries(movimentacaoConfigs).map(([key, config]) => [key, config.label]);

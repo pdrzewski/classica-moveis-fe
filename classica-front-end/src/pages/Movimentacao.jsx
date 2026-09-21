@@ -5,6 +5,7 @@ import { movimentacaoConfigs } from './movimentacaoConfig';
 export default function Movimentacao() {
   const { tipo } = useParams();
   const config = movimentacaoConfigs[tipo] || movimentacaoConfigs.compra;
+  const isTransferencia = tipo === 'transferencia';
 
   return (
     <section className="area-trabalho">
@@ -12,7 +13,7 @@ export default function Movimentacao() {
         <div>
           <p className="titulo-pequeno">Movimentações</p>
           <h1>{config.label}</h1>
-          <p>Registre uma movimentação de {config.direcao === 'ENTRADA' ? 'entrada' : 'saída'} com os dados da operação.</p>
+          <p>{isTransferencia ? 'Transfira produtos entre as lojas cadastradas.' : `Registre uma movimentação de ${config.direcao === 'ENTRADA' ? 'entrada' : 'saída'} com os dados da operação.`}</p>
         </div>
       </div>
 
@@ -21,6 +22,7 @@ export default function Movimentacao() {
         tipoInicial={config.value}
         tipoLabel={config.label}
         direcaoInicial={config.direcao}
+        transferencia={isTransferencia}
       />
     </section>
   );

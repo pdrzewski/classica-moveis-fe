@@ -88,6 +88,12 @@ export default function AppLayout() {
         </button>
         <div className={`submenu ${movimentacaoOpen ? 'expandido' : ''}`}>
           <div className="submenu-grupo">
+            <span className="submenu-grupo-titulo">Entre lojas</span>
+            <NavLink to="/movimentacao/transferencia" onClick={() => setOpen(false)} className={({ isActive }) => isActive ? 'ativo' : ''}>
+              Transferência entre lojas
+            </NavLink>
+          </div>
+          <div className="submenu-grupo">
             <span className="submenu-grupo-titulo">Entradas</span>
             {movimentacaoEntradas.map(([key, label]) => (
               <NavLink key={key} to={`/movimentacao/${key}`} onClick={() => setOpen(false)} className={({ isActive }) => isActive ? 'ativo' : ''}>
