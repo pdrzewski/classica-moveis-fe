@@ -1,6 +1,6 @@
 const metrics = [
   { label: 'Produtos', value: '-', note: 'Sem dados', icon: '▦' },
-  { label: 'Estoque baixo', value: '-', note: 'Sem dados', icon: '!', warning: true },
+  { label: 'Estoque baixo', value: '-', note: 'Sem dados', icon: '!' },
   { label: 'Movimentações', value: '-', note: 'Sem dados', icon: '⇄' },
   { label: 'Lojas', value: '-', note: 'Sem dados', icon: '⌂' },
 ];

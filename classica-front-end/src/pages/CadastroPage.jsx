@@ -7,6 +7,7 @@ import CadastroFornecedora from '../components/Cadastros/cadastro de fornecedora
 import CadastroEstabelecimento from '../components/Cadastros/cadastro de estabelecimento/CadastroEstabelecimento';
 import CadastroCategoria from '../components/Cadastros/cadastro de categoria/CadastroCategoria';
 import CadastroProduto from '../components/Cadastros/cadastro de produto/CadastroProduto';
+import CadastroCliente from '../components/Cadastros/cadastro de cliente/CadastroCliente';
 
 const labels = {
   nome: 'Nome', cargoId: 'Cargo', cpf: 'CPF',
@@ -17,7 +18,8 @@ const labels = {
   complemento: 'Complemento', bairro: 'Bairro', cidade: 'Cidade', estado: 'Estado', fornecedorId: 'Fornecedor',
   categoriaId: 'Categoria', sku: 'SKU', codigoBarras: 'Código de barras', unidadeMedida: 'Unidade de medida',
   marca: 'Marca', precoCusto: 'Preço de custo', precoVenda: 'Preço de venda', estoqueMinimo: 'Estoque mínimo',
-  ativo: 'Ativo', telefone: 'Telefone', responsavelId: 'Responsável',
+  ativo: 'Ativo', telefone: 'Telefone', responsavelId: 'Responsável', documento: 'Documento', email: 'E-mail',
+  observacao: 'Observação', ie: 'IE',
 };
 
 const obterValor = (item, key) => {
@@ -101,6 +103,11 @@ export default function CadastroPage() {
   };
 
   const handleProdutoSuccess = () => {
+    closeForm();
+    carregarRegistros();
+  };
+
+  const handleClienteSuccess = () => {
     closeForm();
     carregarRegistros();
   };
@@ -204,6 +211,13 @@ export default function CadastroPage() {
               <p className="titulo-pequeno">Novo registro</p>
               <h2>Cadastrar produto</h2>
               <CadastroProduto onSuccess={handleProdutoSuccess} />
+            </div>
+          ) : tipo === 'cliente' ? (
+            <div className="cartao-modal">
+              <button type="button" className="fechar" onClick={closeForm}>×</button>
+              <p className="titulo-pequeno">Novo registro</p>
+              <h2>Cadastrar cliente</h2>
+              <CadastroCliente onSuccess={handleClienteSuccess} />
             </div>
           ) : (
             <div className="cartao-modal">

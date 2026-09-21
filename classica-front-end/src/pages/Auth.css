@@ -85,6 +85,15 @@ button {
   transition: opacity 0.2s ease;
 }
 
+.btn-login {
+  width: 100%;
+  min-height: 52px;
+  padding: 14px 18px;
+  border-radius: 10px;
+  font-size: 1.05rem;
+  letter-spacing: 0.01em;
+}
+
 button:hover {
   opacity: 0.94;
 }

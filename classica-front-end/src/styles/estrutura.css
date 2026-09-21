@@ -116,6 +116,8 @@
   padding: 32px 18px 22px;
   background: #272a25;
   color: #e7e9e3;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 .titulo-barra-lateral {
@@ -170,6 +172,8 @@
 
 .submenu.expandido {
   max-height: 360px;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 .submenu-grupo-titulo {

@@ -17,6 +17,7 @@ export default function MovimentacaoForm({ tipoInicial = 'COMPRA', tipoLabel = t
   const [produtosFiltrados, setProdutosFiltrados] = useState([]);
   const [lojas, setLojas] = useState([]);
   const [colaboradores, setColaboradores] = useState([]);
+  const [clientes, setClientes] = useState([]);
   const [itens, setItens] = useState([]);
   const [produtoBusca, setProdutoBusca] = useState('');
   const [motivo, setMotivo] = useState('');
@@ -24,6 +25,7 @@ export default function MovimentacaoForm({ tipoInicial = 'COMPRA', tipoLabel = t
   const [dataMovimentacao, setDataMovimentacao] = useState('');
   const [lojaSelecionada, setLojaSelecionada] = useState('');
   const [colaboradorId, setColaboradorId] = useState('');
+  const [clienteId, setClienteId] = useState('');
   const [formaPagamento, setFormaPagamento] = useState('DINHEIRO');
   const [status, setStatus] = useState('PENDENTE');
   const [loading, setLoading] = useState(false);
@@ -69,13 +71,15 @@ export default function MovimentacaoForm({ tipoInicial = 'COMPRA', tipoLabel = t
   useEffect(() => {
     const carregarDados = async () => {
       try {
-        const [respostaLojas, respostaColaboradores] = await Promise.all([
+        const [respostaLojas, respostaColaboradores, respostaClientes] = await Promise.all([
           api.get('/estabelecimentos').catch(() => api.get('/api/estabelecimentos')),
           api.get('/colaboradores').catch(() => api.get('/api/colaboradores')),
+          api.get('/clientes').catch(() => api.get('/api/clientes')),
         ]);
 
         const lojasCarregadas = listarDados(respostaLojas);
         const colaboradoresCarregados = listarDados(respostaColaboradores);
+        const clientesCarregados = listarDados(respostaClientes);
 
         if (lojasCarregadas.length) {
           setLojas(lojasCarregadas);
@@ -88,6 +92,13 @@ export default function MovimentacaoForm({ tipoInicial = 'COMPRA', tipoLabel = t
           setColaboradores(colaboradoresCarregados);
           if (!colaboradorId) {
             setColaboradorId(String(colaboradoresCarregados[0].id));
+          }
+        }
+
+        if (clientesCarregados.length) {
+          setClientes(clientesCarregados);
+          if (!clienteId && tipoMovimentacao === 'COMPRA') {
+            setClienteId(String(clientesCarregados[0].id));
           }
         }
       } catch {
@@ -183,6 +194,7 @@ export default function MovimentacaoForm({ tipoInicial = 'COMPRA', tipoLabel = t
     setDataMovimentacao('');
     setLojaSelecionada(lojas[0] ? String(lojas[0].id) : '');
     setColaboradorId(colaboradores[0] ? String(colaboradores[0].id) : '');
+    setClienteId(clientes[0] ? String(clientes[0].id) : '');
     setFormaPagamento('DINHEIRO');
     setStatus('PENDENTE');
     setNotice('');
@@ -194,6 +206,7 @@ export default function MovimentacaoForm({ tipoInicial = 'COMPRA', tipoLabel = t
     setNotice('');
 
     const colaboradorSelecionado = colaboradores.find((colaborador) => Number(colaborador.id) === Number(colaboradorId));
+    const clienteSelecionado = clientes.find((cliente) => Number(cliente.id) === Number(clienteId));
     const lojaAtual = lojas.find((loja) => Number(loja.id) === Number(lojaSelecionada));
 
     const payload = {
@@ -210,8 +223,8 @@ export default function MovimentacaoForm({ tipoInicial = 'COMPRA', tipoLabel = t
       estabelecimentoOrigemNome: direcao === 'SAIDA' ? (lojaAtual?.nome || 'Loja atual') : 'Estoque principal',
       estabelecimentoDestinoId: direcao === 'ENTRADA' ? Number(lojaSelecionada || lojaAtual?.id || 1) : 1,
       estabelecimentoDestinoNome: direcao === 'ENTRADA' ? (lojaAtual?.nome || 'Loja atual') : 'Estoque principal',
-      clienteId: null,
-      clienteNome: '',
+      clienteId: tipoMovimentacao === 'COMPRA' ? Number(clienteId || clienteSelecionado?.id || null) : null,
+      clienteNome: tipoMovimentacao === 'COMPRA' ? (clienteSelecionado?.nome || '') : '',
       fornecedorId: null,
       fornecedorNome: '',
       itens: itens.map((item) => ({
@@ -269,6 +282,20 @@ export default function MovimentacaoForm({ tipoInicial = 'COMPRA', tipoLabel = t
               ))}
             </select>
           </div>
+
+          {tipoMovimentacao === 'COMPRA' && (
+            <div className="campo">
+              <label>Cliente</label>
+              <select value={clienteId} onChange={(event) => setClienteId(event.target.value)}>
+                <option value="">Selecione o cliente</option>
+                {clientes.map((cliente) => (
+                  <option key={cliente.id} value={cliente.id}>
+                    {cliente.nome || cliente.titulo || `Cliente ${cliente.id}`}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
         </div>
 
         <div className="movimentacao-grid duas-colunas">

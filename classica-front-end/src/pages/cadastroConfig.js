@@ -18,6 +18,12 @@ export const cadastroConfigs = {
     endpoint: '/fornecedores',
     fields: ['nome', 'cnpj', 'representante', 'telefone1', 'telefone2', 'cep', 'logradouro', 'numero', 'complemento', 'bairro', 'cidade', 'estado'],
   },
+  cliente: {
+    title: 'Clientes',
+    singular: 'cliente',
+    endpoint: '/clientes',
+    fields: ['nome', 'documento', 'telefone1', 'telefone2', 'email', 'observacao', 'ie', 'cep', 'logradouro', 'numero', 'complemento', 'bairro', 'cidade', 'estado'],
+  },
   produto: {
     title: 'Produtos',
     singular: 'produto',

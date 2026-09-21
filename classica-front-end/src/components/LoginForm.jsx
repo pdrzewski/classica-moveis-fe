@@ -56,7 +56,7 @@ export default function LoginForm({ onSuccess }) {
 
       {error && <p className="erro">{error}</p>}
 
-      <button type="submit" disabled={loading}>
+      <button type="submit" className="btn-login" disabled={loading}>
         {loading ? 'Entrando...' : 'Entrar'}
       </button>
     </form>

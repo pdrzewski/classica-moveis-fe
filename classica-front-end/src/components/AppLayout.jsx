@@ -8,6 +8,7 @@ const cadastroItems = [
   ['funcionario', 'Funcionários'],
   ['categoria', 'Categorias'],
   ['fornecedora', 'Fornecedoras'],
+  ['cliente', 'Clientes'],
   ['produto', 'Produtos'],
   ['loja', 'Lojas'],
 ];
