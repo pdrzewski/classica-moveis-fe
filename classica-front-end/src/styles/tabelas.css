@@ -33,6 +33,54 @@
   background: #fafbf9;
 }
 
+.barra-ferramentas-tabela .filtro-select-wrapper {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.barra-ferramentas-tabela .filtro-select-wrapper select {
+  min-width: 220px;
+  padding: 11px 40px 11px 13px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  outline: none;
+  background: #fff;
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  appearance: none;
+  transition: all 140ms ease;
+}
+
+.barra-ferramentas-tabela .filtro-select-wrapper select:hover {
+  border-color: var(--orange);
+  background: #fffaf5;
+}
+
+.barra-ferramentas-tabela .filtro-select-wrapper select:focus {
+  border-color: var(--orange-dark);
+  box-shadow: 0 0 0 3px rgba(230, 126, 34, 0.15);
+}
+
+.barra-ferramentas-tabela .filtro-select-wrapper::after {
+  content: '';
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 0;
+  height: 0;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-top: 6px solid var(--muted);
+  pointer-events: none;
+}
+
+.barra-ferramentas-tabela .filtro-select-wrapper select:focus::after {
+  border-top-color: var(--orange-dark);
+}
+
 .envoltorio-tabela {
   overflow-x: auto;
 }
@@ -100,4 +148,50 @@ tbody tr:hover {
 
 .tabela-estoque td strong {
   font-weight: 700;
+}
+
+.acoes-funcionario-bar {
+  display: flex;
+  gap: 8px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+  justify-content: flex-end;
+}
+
+.btn-icon {
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--text);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 140ms ease;
+}
+
+.btn-icon:hover {
+  background: #faf7f0;
+  border-color: var(--orange);
+  color: var(--orange-dark);
+}
+
+.btn-icon-perigo:hover {
+  background: #fff0f0;
+  border-color: #e03e3e;
+  color: #e03e3e;
+}
+
+.btn-icon:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.input-readonly {
+  background: #f5f5f5;
+  color: var(--muted);
+  cursor: not-allowed;
+  border-color: var(--line);
 }

@@ -155,9 +155,14 @@ export default function CompraForm() {
 
     if (!produtoEncontrado) return;
 
-    if (fornecedorId && Number(produtoEncontrado.fornecedorId) !== Number(fornecedorId)) {
-      setNotice('Produto não pertence ao fornecedor selecionado.');
-      return;
+    if (fornecedorId) {
+      const fornecedorSelecionado = fornecedores.find(f => String(f.id) === String(fornecedorId));
+      const nomeFornecedorSelecionado = fornecedorSelecionado?.nome || fornecedorSelecionado?.razaoSocial || fornecedorSelecionado?.titulo;
+      const nomeFornecedorProduto = produtoEncontrado.fornecedor || produtoEncontrado.fornecedorNome || produtoEncontrado.fornecedor_nome;
+      if (nomeFornecedorSelecionado && nomeFornecedorProduto && nomeFornecedorSelecionado !== nomeFornecedorProduto) {
+        setNotice('Produto não pertence ao fornecedor selecionado.');
+        return;
+      }
     }
 
     const produtoId = String(produtoEncontrado.id);
@@ -189,9 +194,14 @@ export default function CompraForm() {
   };
 
   const aoClicarSugestao = (produto) => {
-    if (fornecedorId && Number(produto.fornecedorId) !== Number(fornecedorId)) {
-      setNotice('Produto não pertence ao fornecedor selecionado.');
-      return;
+    if (fornecedorId) {
+      const fornecedorSelecionado = fornecedores.find(f => String(f.id) === String(fornecedorId));
+      const nomeFornecedorSelecionado = fornecedorSelecionado?.nome || fornecedorSelecionado?.razaoSocial || fornecedorSelecionado?.titulo;
+      const nomeFornecedorProduto = produto.fornecedor || produto.fornecedorNome || produto.fornecedor_nome;
+      if (nomeFornecedorSelecionado && nomeFornecedorProduto && nomeFornecedorSelecionado !== nomeFornecedorProduto) {
+        setNotice('Produto não pertence ao fornecedor selecionado.');
+        return;
+      }
     }
     const jaExiste = itens.find((item) => item.produtoId === String(produto.id));
     if (jaExiste) {
@@ -421,7 +431,6 @@ export default function CompraForm() {
                 <div className="col-produto">Produto</div>
                 <div className="col-qtd">Qtd</div>
                 <div className="col-vl">Vl. Unit.</div>
-                <div className="col-desc">Desc.</div>
                 <div className="col-sub">Subtotal</div>
                 <div className="col-saldo">Saldo</div>
                 <div className="col-acoes"></div>
@@ -440,7 +449,7 @@ export default function CompraForm() {
                           type="number"
                           min="1"
                           max={saldo > 0 ? saldo : undefined}
-                          value={item.quantidade}
+                          value={String(item.quantidade)}
                           onChange={(event) => alterarQuantidade(item.produtoId, event.target.value)}
                           title={saldo > 0 ? `Máximo disponível: ${saldo}` : ''}
                         />
@@ -450,17 +459,8 @@ export default function CompraForm() {
                           type="number"
                           min="0"
                           step="0.01"
-                          value={item.valorUnitario}
+                          value={String(item.valorUnitario)}
                           onChange={(event) => alterarValorUnitario(item.produtoId, event.target.value)}
-                        />
-                      </div>
-                      <div className="col-desc">
-                        <input
-                          type="number"
-                          min="0"
-                          step="0.01"
-                          value={item.desconto}
-                          onChange={(event) => alterarDesconto(item.produtoId, event.target.value)}
                         />
                       </div>
                       <div className="col-sub">

@@ -149,3 +149,106 @@
 .links-rapidos a:hover {
   background: #fffaf5;
 }
+
+.cartao-equipe {
+  display: flex;
+  flex-direction: column;
+  min-height: 280px;
+}
+
+.lista-equipe {
+  list-style: none;
+  margin: 0;
+  padding: 0 24px 24px;
+}
+
+.item-equipe {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 12px;
+  border-radius: 10px;
+  transition: background 140ms ease;
+}
+
+.item-equipe:hover {
+  background: #faf7f0;
+}
+
+.item-equipe + .item-equipe {
+  border-top: 1px solid var(--line);
+}
+
+.avatar {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: var(--ink);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 15px;
+  flex-shrink: 0;
+}
+
+.info {
+  flex: 1;
+  min-width: 0;
+}
+
+.info strong {
+  display: block;
+  font-size: 14px;
+  color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.detalhe {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+  font-size: 12px;
+  color: var(--muted);
+  flex-wrap: wrap;
+}
+
+.detalhe time {
+  font-variant-numeric: tabular-nums;
+}
+
+.dias-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 8px;
+  background: #fff3e0;
+  color: var(--orange-dark);
+  border-radius: 11px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.ferias-periodo {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  background: #e8f5e9;
+  color: #2e7d32;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+@media (max-width: 960px) {
+  .grade-inicio {
+    grid-template-columns: 1fr;
+  }
+}

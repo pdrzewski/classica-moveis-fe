@@ -117,10 +117,6 @@ export default function TransferenciaForm() {
     return estoqueOrigem[Number(produtoId)] || 0;
   };
 
-  const valorTotal = useMemo(() => {
-    return 0;
-  }, []);
-
   const adicionarProduto = (produtoInformado = null) => {
     const candidatos = produtosFiltrados.length > 0 ? produtosFiltrados : produtos;
     const produtoEncontrado = produtoInformado || candidatos.find((produto) => {
@@ -165,6 +161,8 @@ export default function TransferenciaForm() {
           produtoId,
           produtoNome: produtoEncontrado.nome,
           quantidade: 1,
+          valorUnitario: Number(produtoEncontrado.precoVenda || produtoEncontrado.preco_venda || 0),
+          desconto: 0,
         },
       ]);
     }
@@ -401,22 +399,37 @@ export default function TransferenciaForm() {
                 const produto = produtos.find((p) => Number(p.id) === Number(item.produtoId));
                 return (
                   <div key={item.produtoId} className="item-movimentacao">
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', minWidth: 0 }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', minWidth: 0, flex: 1 }}>
                       <span>{item.produtoNome}</span>
                       <small className="texto-secundario">
                         Estoque na origem: {saldo} {produto?.unidadeMedida || produto?.unidade_medida || 'UN'}
                       </small>
                     </div>
-                    <input
-                      type="number"
-                      min="1"
-                      max={saldo}
-                      value={item.quantidade}
-                      onChange={(event) => alterarQuantidade(item.produtoId, event.target.value)}
-                      title={`Máximo disponível: ${saldo}`}
-                      style={{ width: '100px' }}
-                    />
-                    <button type="button" className="btn-remover" onClick={() => removerProduto(item.produtoId)}>
+                    <div className="quantidade-wrapper">
+                      <input
+                        type="text"
+                        inputMode="numeric"
+                        pattern="[0-9]*"
+                        min="1"
+                        max={saldo}
+                        value={String(item.quantidade)}
+                        onChange={(event) => {
+                          const val = event.target.value.replace(/\D/g, '');
+                          alterarQuantidade(item.produtoId, val);
+                        }}
+                        onBlur={(event) => {
+                          const val = event.target.value.replace(/\D/g, '');
+                          if (val === '' || Number(val) < 1) {
+                            alterarQuantidade(item.produtoId, 1);
+                          } else if (Number(val) > saldo) {
+                            alterarQuantidade(item.produtoId, saldo);
+                          }
+                        }}
+                        title={`Máximo disponível: ${saldo}`}
+                        style={{ width: '80px' }}
+                      />
+                    </div>
+                    <button type="button" className="btn-remover" onClick={() => removerProduto(item.produtoId)} style={{ marginLeft: '16px' }}>
                       ×
                     </button>
                   </div>
