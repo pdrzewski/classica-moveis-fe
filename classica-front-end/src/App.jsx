@@ -7,22 +7,26 @@ import Estoque from './pages/Estoque';
 import Movimentacao from './pages/Movimentacao';
 import Historico from './pages/Historico';
 import Relatorios from './pages/Relatorios';
+import { AuthProvider } from './context/AuthContext';
 
 export default function App() {
   return (
     <Router>
-      <Routes>
-        <Route path="/" element={<Login />} />
-        <Route element={<AppLayout />}>
-          <Route path="/home" element={<Home />} />
-          <Route path="/cadastro/:tipo" element={<CadastroPage />} />
-          <Route path="/estoque" element={<Estoque />} />
-          <Route path="/movimentacao" element={<Navigate to="/movimentacao/compra" replace />} />
-          <Route path="/movimentacao/:tipo" element={<Movimentacao />} />
-          <Route path="/historico" element={<Historico />} />
-          <Route path="/relatorios" element={<Relatorios />} />
-        </Route>
-      </Routes>
+      <AuthProvider>
+        <Routes>
+          <Route path="/" element={<Navigate to="/login" replace />} />
+          <Route path="/login" element={<Login />} />
+          <Route element={<AppLayout />}>
+            <Route path="/home" element={<Home />} />
+            <Route path="/cadastro/:tipo" element={<CadastroPage />} />
+            <Route path="/estoque" element={<Estoque />} />
+            <Route path="/movimentacao" element={<Navigate to="/movimentacao/compra" replace />} />
+            <Route path="/movimentacao/:tipo" element={<Movimentacao />} />
+            <Route path="/historico" element={<Historico />} />
+            <Route path="/relatorios" element={<Relatorios />} />
+          </Route>
+        </Routes>
+      </AuthProvider>
     </Router>
   );
 }

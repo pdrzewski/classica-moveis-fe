@@ -3,6 +3,7 @@ import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import logo from '../assets/Clássica(1).png';
 import api from '../services/Api';
 import { criarMovimentacaoItems, movimentacaoConfigs, movimentacaoItems } from '../pages/movimentacaoConfig';
+import { useAuth } from '../context/AuthContext';
 
 const cadastroItems = [
   ['funcionario', 'Funcionários'],
@@ -21,6 +22,7 @@ const menuItems = [
 ];
 
 export default function AppLayout() {
+  const { usuario } = useAuth();
   const [open, setOpen] = useState(false);
   const [cadastroOpen, setCadastroOpen] = useState(true);
   const [movimentacaoOpen, setMovimentacaoOpen] = useState(true);
@@ -55,6 +57,9 @@ export default function AppLayout() {
   const movimentacaoEntradas = tiposMovimentacao.filter(([key]) => movimentacaoConfigs[key]?.direcao === 'ENTRADA');
   const movimentacaoSaidas = tiposMovimentacao.filter(([key]) => movimentacaoConfigs[key]?.direcao === 'SAIDA');
 
+  const nomeUsuario = usuario?.nome || usuario?.login || 'Administrador';
+  const iniciais = nomeUsuario.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2);
+
   return (
     <div className="shell-aplicacao">
       <header className="barra-topo">
@@ -63,7 +68,7 @@ export default function AppLayout() {
         </button>
         <img src={logo} alt="Clássica Móveis" className="marca-logo" />
         <div className="migalha"><strong>{title}</strong><span>Clássica Móveis / {title}</span></div>
-        <div className="usuario-pilula"><span className="avatar">CM</span><span>Administrador</span></div>
+        <div className="usuario-pilula"><span className="avatar">{iniciais || 'CM'}</span><span>{nomeUsuario}</span></div>
       </header>
       <aside className={`barra-lateral ${open ? 'aberto' : ''}`}>
         <div className="titulo-barra-lateral">Navegação</div>
