@@ -446,11 +446,24 @@ export default function CompraForm() {
                       </div>
                       <div className="col-qtd">
                         <input
-                          type="number"
+                          type="text"
+                          inputMode="numeric"
+                          pattern="[0-9]*"
                           min="1"
                           max={saldo > 0 ? saldo : undefined}
                           value={String(item.quantidade)}
-                          onChange={(event) => alterarQuantidade(item.produtoId, event.target.value)}
+                          onChange={(event) => {
+                            const val = event.target.value.replace(/\D/g, '');
+                            alterarQuantidade(item.produtoId, val);
+                          }}
+                          onBlur={(event) => {
+                            const val = event.target.value.replace(/\D/g, '');
+                            if (val === '' || Number(val) < 1) {
+                              alterarQuantidade(item.produtoId, 1);
+                            } else if (saldo > 0 && Number(val) > saldo) {
+                              alterarQuantidade(item.produtoId, saldo);
+                            }
+                          }}
                           title={saldo > 0 ? `Máximo disponível: ${saldo}` : ''}
                         />
                       </div>

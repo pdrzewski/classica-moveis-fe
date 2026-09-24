@@ -1,10 +1,7 @@
 export const movimentacaoConfigs = {
   compra: { value: 'COMPRA', label: 'Compra', direcao: 'ENTRADA' },
-  'devolucao-cliente': { value: 'DEVOLUCAO_CLIENTE', label: 'Devolução do cliente', direcao: 'ENTRADA' },
   'ajuste-entrada': { value: 'AJUSTE_ENTRADA', label: 'Ajuste de entrada', direcao: 'ENTRADA' },
   venda: { value: 'VENDA', label: 'Venda', direcao: 'SAIDA' },
-  quebra: { value: 'QUEBRA', label: 'Quebra', direcao: 'SAIDA' },
-  'devolucao-fornecedor': { value: 'DEVOLUCAO_FORNECEDOR', label: 'Devolução ao fornecedor', direcao: 'SAIDA' },
   'ajuste-saida': { value: 'AJUSTE_SAIDA', label: 'Ajuste de saída', direcao: 'SAIDA' },
   transferencia: { value: 'TRANSFERENCIA', label: 'Transferência entre lojas', direcao: 'TRANSFERENCIA' },
 };

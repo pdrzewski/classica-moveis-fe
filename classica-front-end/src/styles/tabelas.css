@@ -195,3 +195,14 @@ tbody tr:hover {
   cursor: not-allowed;
   border-color: var(--line);
 }
+
+.btn-icon.concluido {
+  background: #e8f5e9;
+  border-color: #4caf50;
+  color: #2e7d32;
+  cursor: default;
+}
+
+.btn-icon.concluido svg {
+  stroke: #2e7d32;
+}

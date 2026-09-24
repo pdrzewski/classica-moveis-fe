@@ -42,31 +42,74 @@ function CartaoEquipe({ titulo, icone: _icone, itens, carregando, vazioTexto }) 
         <div className="conteudo-vazio"><p>{vazioTexto}</p></div>
       ) : (
         <ul className="lista-equipe">
-          {itens.map((item) => (
-            <li key={item.id} className="item-equipe">
-              <div className="avatar">
-                <span>{item.nome?.charAt(0) || '?'}</span>
-              </div>
-              <div className="info">
-                <strong>{item.nome}</strong>
-                <span className="detalhe">
-                  {item.dataNascimento && (
-                    <>
-                      Aniversário: <time>{new Date(item.dataNascimento).toLocaleDateString('pt-BR')}</time>
-                      {' | '}
-                    </>
-                  )}
-                  {item.diasParaAniversario !== undefined && (
-                    <span className="dias-badge">{item.diasParaAniversario} dias</span>
-                  )}
-                  {item.dataInicio && item.dataFim && (
-                    <>
-                      <span className="ferias-periodo">
-                        {new Date(item.dataInicio).toLocaleDateString('pt-BR')} a {new Date(item.dataFim).toLocaleDateString('pt-BR')}
+          {itens.map((item) => {
+            const ehAniversarioHoje = item.diasParaAniversario === 0;
+            return (
+              <li key={item.id} className={`item-equipe ${ehAniversarioHoje ? 'aniversario-hoje' : ''}`}>
+                <div className="avatar">
+                  <span>{item.nome?.charAt(0) || '?'}</span>
+                </div>
+                <div className="info">
+                  <strong>{item.nome}</strong>
+                  <span className="detalhe">
+                    {item.dataNascimento && (
+                      <>
+                        Aniversário: <time>{new Date(item.dataNascimento).toLocaleDateString('pt-BR')}</time>
+                        {' | '}
+                      </>
+                    )}
+                    {item.diasParaAniversario !== undefined && (
+                      <span className={`dias-badge ${ehAniversarioHoje ? 'aniversario-hoje-badge' : ''}`}>
+                        {ehAniversarioHoje ? 'Aniversário hoje' : `${item.diasParaAniversario} dias`}
                       </span>
-                    </>
-                  )}
+                    )}
+                    {item.dataInicio && item.dataFim && (
+                      <>
+                        <span className="ferias-periodo">
+                          {new Date(item.dataInicio).toLocaleDateString('pt-BR')} a {new Date(item.dataFim).toLocaleDateString('pt-BR')}
+                        </span>
+                      </>
+                    )}
+                  </span>
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </section>
+  );
+}
+
+function CartaoEstoqueBaixo({ itens, carregando }) {
+  return (
+    <section className="superficie cartao-estoque-baixo">
+      <div className="titulo-secao">
+        <div>
+          <p className="titulo-pequeno">Atenção</p>
+          <h2>Estoque Baixo</h2>
+        </div>
+        <span className="crachá-contagem aviso">{itens.length}</span>
+      </div>
+
+      {carregando ? (
+        <div className="conteudo-vazio"><p>Carregando...</p></div>
+      ) : itens.length === 0 ? (
+        <div className="conteudo-vazio"><p>Todos os produtos estão com estoque adequado.</p></div>
+      ) : (
+        <ul className="lista-estoque-baixo">
+          {itens.map((item) => (
+            <li key={item.produto.id} className="item-estoque-baixo">
+              <div className="info">
+                <strong>{item.produto.nome}</strong>
+                <span className="detalhe">
+                  SKU: {item.produto.sku}
                 </span>
+              </div>
+              <div className="estoque-info">
+                <span className="estoque-atual">{item.estoqueAtual}</span>
+                <span className="estoque-minimo">Mín: {item.produto.estoqueMinimo}</span>
+                <span className="diferenca">Faltam {item.produto.estoqueMinimo - item.estoqueAtual}</span>
               </div>
             </li>
           ))}
@@ -79,8 +122,10 @@ function CartaoEquipe({ titulo, icone: _icone, itens, carregando, vazioTexto }) 
 export default function Home() {
   const [ferias, setFerias] = useState([]);
   const [aniversariantes, setAniversariantes] = useState([]);
+  const [estoqueBaixo, setEstoqueBaixo] = useState([]);
   const [carregandoFerias, setCarregandoFerias] = useState(true);
   const [carregandoAniversariantes, setCarregandoAniversariantes] = useState(true);
+  const [carregandoEstoqueBaixo, setCarregandoEstoqueBaixo] = useState(true);
 
   useEffect(() => {
     const buscarFerias = async () => {
@@ -107,8 +152,21 @@ export default function Home() {
       }
     };
 
+    const buscarEstoqueBaixo = async () => {
+      try {
+        const resp = await api.get('/produtos/estoque-baixo').catch(() => api.get('/api/produtos/estoque-baixo'));
+        const dados = Array.isArray(resp?.data) ? resp.data : resp?.data?.content || resp?.data?.dados || resp?.data || [];
+        setEstoqueBaixo(dados.slice(0, 5));
+      } catch {
+        setEstoqueBaixo([]);
+      } finally {
+        setCarregandoEstoqueBaixo(false);
+      }
+    };
+
     buscarFerias();
     buscarAniversariantes();
+    buscarEstoqueBaixo();
   }, []);
 
   return (
@@ -134,6 +192,10 @@ export default function Home() {
           itens={ferias}
           carregando={carregandoFerias}
           vazioTexto="Nenhum funcionário em férias no momento."
+        />
+        <CartaoEstoqueBaixo
+          itens={estoqueBaixo}
+          carregando={carregandoEstoqueBaixo}
         />
         <CartaoEquipe
           titulo="Aniversariantes"

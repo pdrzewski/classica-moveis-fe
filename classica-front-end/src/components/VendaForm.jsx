@@ -10,18 +10,28 @@ const listarDados = (resposta) => {
   return [];
 };
 
+const getEstabelecimentoIdFromStorage = () => {
+  try {
+    const stored = localStorage.getItem('classica_usuario');
+    if (stored) {
+      const usuario = JSON.parse(stored);
+      return usuario?.colaborador?.estabelecimentoId || usuario?.colaborador?.fkEstabelecimento || usuario?.colaborador?.estabelecimento_id;
+    }
+  } catch {}
+  return null;
+};
+
 export default function VendaForm() {
   const { usuario } = useAuth();
   const colaboradorLogado = usuario?.colaborador;
-  const estabelecimentoOrigemId = colaboradorLogado?.estabelecimentoId || colaboradorLogado?.fkEstabelecimento || colaboradorLogado?.estabelecimento_id;
+  const colaboradorId = usuario?.colaboradorId || colaboradorLogado?.id;
+  const estabelecimentoOrigemId = getEstabelecimentoIdFromStorage() || colaboradorLogado?.estabelecimentoId || colaboradorLogado?.fkEstabelecimento || colaboradorLogado?.estabelecimento_id;
 
   const [produtos, setProdutos] = useState([]);
   const [produtosFiltrados, setProdutosFiltrados] = useState([]);
-  const [colaboradores, setColaboradores] = useState([]);
   const [itens, setItens] = useState([]);
   const [produtoBusca, setProdutoBusca] = useState('');
   const [observacao, setObservacao] = useState('');
-  const [colaboradorId, setColaboradorId] = useState('');
   const [formaPagamento, setFormaPagamento] = useState('PIX');
   const [loading, setLoading] = useState(false);
   const [notice, setNotice] = useState('');
@@ -109,22 +119,7 @@ export default function VendaForm() {
   };
 
   useEffect(() => {
-    const carregarColaboradores = async () => {
-      try {
-        const resposta = await api.get('/colaboradores').catch(() => api.get('/api/colaboradores'));
-        const colaboradoresCarregados = listarDados(resposta);
-        setColaboradores(colaboradoresCarregados);
-        if (!colaboradorId && colaboradoresCarregados.length) {
-          const padrao = colaboradoresCarregados.find(c => String(c.id) === String(colaboradorLogado?.id)) || colaboradoresCarregados[0];
-          setColaboradorId(String(padrao.id));
-        }
-      } catch {
-        setColaboradores([]);
-      }
-    };
-
     buscarProdutos('');
-    carregarColaboradores();
     if (estabelecimentoOrigemId) {
       buscarEstoqueOrigem(estabelecimentoOrigemId);
     }
@@ -305,7 +300,7 @@ export default function VendaForm() {
       return false;
     }
     if (!colaboradorId) {
-      setNotice('Selecione o colaborador.');
+      setNotice('Colaborador não identificado na sessão.');
       return false;
     }
     if (!formaPagamento) {
@@ -449,18 +444,6 @@ export default function VendaForm() {
                 </div>
               </div>
             )}
-          </div>
-
-          <div className="campo">
-            <label>Colaborador *</label>
-            <select value={colaboradorId} onChange={(e) => setColaboradorId(e.target.value)} required>
-              <option value="">Selecione o colaborador</option>
-              {colaboradores.map((colaborador) => (
-                <option key={colaborador.id} value={colaborador.id}>
-                  {colaborador.nome || colaborador.titulo || `Colaborador ${colaborador.id}`}
-                </option>
-              ))}
-            </select>
           </div>
 
           <div className="campo">
@@ -638,7 +621,7 @@ export default function VendaForm() {
         {notice && <div className="aviso">{notice}</div>}
 
         <div className="acoes-movimentacao rodape-acoes">
-          <button className="primario" type="submit" disabled={loading || itens.length === 0 || !clienteSelecionado || !colaboradorId || !estabelecimentoOrigemId}>
+          <button className="primario" type="submit" disabled={loading || itens.length === 0 || !clienteSelecionado || !estabelecimentoOrigemId}>
             {loading ? 'Finalizando...' : 'Finalizar venda'}
           </button>
         </div>

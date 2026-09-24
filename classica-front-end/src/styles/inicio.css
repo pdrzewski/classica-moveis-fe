@@ -252,3 +252,115 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* Estoque Baixo */
+.cartao-estoque-baixo {
+  display: flex;
+  flex-direction: column;
+  min-height: 280px;
+}
+
+.crachá-contagem.aviso {
+  background: #fdeaea;
+  color: #a31212;
+}
+
+.lista-estoque-baixo {
+  list-style: none;
+  margin: 0;
+  padding: 0 24px 24px;
+}
+
+.item-estoque-baixo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 14px 12px;
+  border-radius: 10px;
+  transition: background 140ms ease;
+}
+
+.item-estoque-baixo:hover {
+  background: #fdf2f2;
+}
+
+.item-estoque-baixo + .item-estoque-baixo {
+  border-top: 1px solid var(--line);
+}
+
+.item-estoque-baixo .info {
+  flex: 1;
+  min-width: 0;
+}
+
+.item-estoque-baixo .info strong {
+  display: block;
+  font-size: 14px;
+  color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.item-estoque-baixo .detalhe {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.estoque-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.estoque-atual {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  height: 32px;
+  padding: 0 10px;
+  background: #fdeaea;
+  color: #a31212;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.estoque-minimo {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.diferenca {
+  font-size: 11px;
+  font-weight: 600;
+  color: #b9783e;
+  background: #fff8e1;
+  padding: 4px 8px;
+  border-radius: 6px;
+}
+
+.item-equipe.aniversario-hoje {
+  background: #fff8e1;
+}
+
+.item-equipe.aniversario-hoje:hover {
+  background: #fff3d1;
+}
+
+.item-equipe.aniversario-hoje .avatar {
+  background: linear-gradient(135deg, var(--orange) 0%, #e65100 100%);
+}
+
+.dias-badge.aniversario-hoje-badge {
+  background: var(--orange);
+  color: #fff;
+  font-weight: 700;
+}

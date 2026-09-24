@@ -414,12 +414,12 @@ export default function MovimentacaoForm({ tipoInicial = 'COMPRA', tipoLabel = t
               {itens.map((item) => (
                 <div key={item.produtoId} className="item-movimentacao">
                   <span>{item.produtoNome}</span>
-                  <input
-                    type="number"
-                    min="1"
-                    value={item.quantidade}
-                    onChange={(event) => alterarQuantidade(item.produtoId, event.target.value)}
-                  />
+<input
+                      type="number"
+                      min="1"
+                      value={String(item.quantidade)}
+                      onChange={(event) => alterarQuantidade(item.produtoId, event.target.value)}
+                    />
                   <button type="button" className="btn-remover" onClick={() => removerProduto(item.produtoId)}>
                     ×
                   </button>
