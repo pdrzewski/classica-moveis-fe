@@ -111,6 +111,28 @@ export default function CadastroCliente({ onSuccess }) {
     <form onSubmit={handleSubmit} className="form-cadastro-funcionario">
       <div className="form-grid">
         <div className="grupo-entrada">
+          <label>CPF</label>
+          <input
+            type="text"
+            name="documento"
+            value={form.documento}
+            onChange={handleChange}
+            required
+            placeholder="Digite o CPF"
+          />
+        </div>
+
+        <div className="grupo-entrada">
+          <label>IE</label>
+          <input
+            type="text"
+            name="ie"
+            value={form.ie}
+            onChange={handleChange}
+          />
+        </div>
+
+        <div className="grupo-entrada">
           <label>Nome</label>
           <input
             type="text"
@@ -118,18 +140,6 @@ export default function CadastroCliente({ onSuccess }) {
             value={form.nome}
             onChange={handleChange}
             required
-          />
-        </div>
-
-        <div className="grupo-entrada">
-          <label>Documento</label>
-          <input
-            type="text"
-            name="documento"
-            value={form.documento}
-            onChange={handleChange}
-            required
-            placeholder="CPF ou CNPJ"
           />
         </div>
 
@@ -160,16 +170,6 @@ export default function CadastroCliente({ onSuccess }) {
             type="email"
             name="email"
             value={form.email}
-            onChange={handleChange}
-          />
-        </div>
-
-        <div className="grupo-entrada">
-          <label>IE</label>
-          <input
-            type="text"
-            name="ie"
-            value={form.ie}
             onChange={handleChange}
           />
         </div>
