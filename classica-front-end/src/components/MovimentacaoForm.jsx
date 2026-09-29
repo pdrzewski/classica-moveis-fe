@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import api from '../services/Api';
 
 const listarDados = (resposta) => {
@@ -67,6 +67,7 @@ export default function MovimentacaoForm({ tipoInicial = 'COMPRA', tipoLabel = t
   const [salvandoCliente, setSalvandoCliente] = useState(false);
   const [buscandoCepCliente, setBuscandoCepCliente] = useState(false);
   const [erroCliente, setErroCliente] = useState('');
+  const consultaClienteAtual = useRef(0);
   const [itens, setItens] = useState([]);
   const [produtoBusca, setProdutoBusca] = useState('');
   const [motivo, setMotivo] = useState('');
@@ -142,13 +143,13 @@ export default function MovimentacaoForm({ tipoInicial = 'COMPRA', tipoLabel = t
     setModalClienteAberto(true);
   };
 
-  const buscarClientePorDocumento = async () => {
-    const documento = documentoNormalizado(clienteForm.documento);
+  const buscarClientePorDocumento = async (documentoInformado = clienteForm.documento) => {
+    const documento = documentoNormalizado(documentoInformado);
     if (documento.length !== 11) {
-      setErroCliente('Informe um CPF válido com 11 números para pesquisar.');
       return;
     }
 
+    const consultaId = ++consultaClienteAtual.current;
     setBuscandoCliente(true);
     setErroCliente('');
     setEstadoBuscaCliente('buscando');
@@ -167,6 +168,7 @@ export default function MovimentacaoForm({ tipoInicial = 'COMPRA', tipoLabel = t
       const cliente = [candidatoDireto, ...lista].find((item) => (
         documentoNormalizado(item?.documento || item?.cpf) === documento
       ));
+      if (consultaId !== consultaClienteAtual.current) return;
 
       if (!cliente) {
         setClienteEncontrado(null);
@@ -196,10 +198,11 @@ export default function MovimentacaoForm({ tipoInicial = 'COMPRA', tipoLabel = t
       });
       setEstadoBuscaCliente('encontrado');
     } catch (err) {
+      if (consultaId !== consultaClienteAtual.current) return;
       setEstadoBuscaCliente('inicial');
       setErroCliente(err.response?.data?.message || 'Não foi possível consultar o cliente. Tente novamente.');
     } finally {
-      setBuscandoCliente(false);
+      if (consultaId === consultaClienteAtual.current) setBuscandoCliente(false);
     }
   };
 
@@ -214,9 +217,13 @@ export default function MovimentacaoForm({ tipoInicial = 'COMPRA', tipoLabel = t
           : value;
 
     setClienteForm((formAtual) => ({ ...formAtual, [name]: valor }));
-    if (name === 'documento' && estadoBuscaCliente !== 'inicial') {
+    if (name === 'documento') {
+      consultaClienteAtual.current += 1;
+      setBuscandoCliente(false);
       setEstadoBuscaCliente('inicial');
       setClienteEncontrado(null);
+      setErroCliente('');
+      if (documentoNormalizado(valor).length === 11) buscarClientePorDocumento(valor);
     }
     if (name === 'cep' && valor.length === 8) buscarEnderecoClientePorCep(valor);
   };
@@ -711,17 +718,24 @@ export default function MovimentacaoForm({ tipoInicial = 'COMPRA', tipoLabel = t
           {['COMPRA', 'VENDA'].includes(tipoMovimentacao) && (
             <div className="campo">
               <label>Cliente</label>
-              <select value={clienteId} onChange={(event) => setClienteId(event.target.value)}>
-                <option value="">{venda ? 'Selecione ou cadastre um cliente' : 'Selecione o cliente'}</option>
-                {clientes.map((cliente) => {
-                  const id = cliente.id || cliente.clienteId || cliente.cliente_id;
-                  return (
-                  <option key={id} value={id}>
-                    {cliente.nome || cliente.titulo || `Cliente ${id}`}
-                  </option>
-                  );
-                })}
-              </select>
+              {tipoMovimentacao === 'COMPRA' ? (
+                <select value={clienteId} onChange={(event) => setClienteId(event.target.value)}>
+                  <option value="">Selecione o cliente</option>
+                  {clientes.map((cliente) => {
+                    const id = cliente.id || cliente.clienteId || cliente.cliente_id;
+                    return (
+                      <option key={id} value={id}>
+                        {cliente.nome || cliente.titulo || `Cliente ${id}`}
+                      </option>
+                    );
+                  })}
+                </select>
+              ) : (
+                <span>
+                  {clientes.find((cliente) => Number(cliente.id || cliente.clienteId || cliente.cliente_id) === Number(clienteId))?.nome
+                    || 'Nenhum cliente selecionado'}
+                </span>
+              )}
               {venda && (
                 <button type="button" className="btn-adicionar-cliente-venda" onClick={iniciarCadastroCliente}>
                   + Adicionar cliente
@@ -1009,26 +1023,12 @@ export default function MovimentacaoForm({ tipoInicial = 'COMPRA', tipoLabel = t
                       name="documento"
                       value={clienteForm.documento}
                       onChange={alterarCampoCliente}
-                      onKeyDown={(event) => {
-                        if (event.key === 'Enter' && estadoBuscaCliente !== 'novo' && estadoBuscaCliente !== 'encontrado') {
-                          event.preventDefault();
-                          buscarClientePorDocumento();
-                        }
-                      }}
                       placeholder="Digite o CPF"
                       inputMode="numeric"
                       required
                     />
-                    <button
-                      type="button"
-                      className="btn-buscar-cliente-venda"
-                      onClick={buscarClientePorDocumento}
-                      disabled={buscandoCliente || documentoNormalizado(clienteForm.documento).length !== 11}
-                      title="Consultar cliente pelo CPF"
-                    >
-                      {buscandoCliente ? 'Consultando...' : 'Consultar'}
-                    </button>
                   </span>
+                  {buscandoCliente && <small>Consultando CPF...</small>}
                 </label>
 
                 {estadoBuscaCliente === 'novo' && <p className="resultado-busca-cliente-venda">CPF não cadastrado. Preencha os dados para cadastrar.</p>}

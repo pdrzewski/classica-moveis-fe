@@ -337,8 +337,7 @@
   opacity: 0.65;
 }
 
-.btn-adicionar-cliente-venda,
-.btn-buscar-cliente-venda {
+.btn-adicionar-cliente-venda {
   width: fit-content;
   padding: 9px 12px;
   border: 1px solid var(--line);
@@ -349,8 +348,7 @@
   font-weight: 700;
 }
 
-.btn-adicionar-cliente-venda:hover,
-.btn-buscar-cliente-venda:hover:not(:disabled) {
+.btn-adicionar-cliente-venda:hover {
   background: #f4f1eb;
 }
 
@@ -400,14 +398,7 @@
 }
 
 .linha-busca-cpf-venda {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 8px;
-}
-
-.btn-buscar-cliente-venda:disabled {
-  cursor: not-allowed;
-  opacity: 0.55;
+  display: block;
 }
 
 .resultado-busca-cliente-venda {
@@ -486,10 +477,9 @@
   }
 
   .linha-busca-cpf-venda {
-    grid-template-columns: minmax(0, 1fr);
+    display: block;
   }
 
-  .btn-buscar-cliente-venda,
   .acoes-cliente-venda button {
     width: 100%;
   }
