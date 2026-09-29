@@ -3,8 +3,8 @@ export const cadastroConfigs = {
     title: 'Funcionários',
     singular: 'funcionário',
     endpoint: '/colaboradores',
-    relations: { cargoId: '/cargos', estabelecimentoId: '/estabelecimentos' },
-    fields: ['nome', 'login', 'cargoId', 'cpf', 'dataAdmissao', 'dataNascimento', 'salario', 'carteiraTrabalho', 'comissao', 'estabelecimentoId', 'emFerias'],
+    relations: { cargoId: '/cargos', estabelecimentoId: '/estabelecimentos', usuarioId: '/usuarios' },
+    fields: ['nome', 'login', 'cargoId', 'cpf', 'dataAdmissao', 'dataNascimento', 'salario', 'carteiraTrabalho', 'comissao', 'estabelecimentoId', 'usuarioId'],
   },
   categoria: {
     title: 'Categorias',

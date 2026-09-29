@@ -28,7 +28,6 @@ export default function CadastroForm({ onSuccess }) {
     login: '',
     senha: '',
     cargoId: '',
-    emFerias: false,
     dataAdmissao: '',
     dataNascimento: '',
     salario: '',
@@ -113,7 +112,6 @@ export default function CadastroForm({ onSuccess }) {
         nome: form.nome,
         cargoId: Number(form.cargoId),
         usuarioId: Number(usuarioId),
-        emFerias: Boolean(form.emFerias),
         dataAdmissao: form.dataAdmissao,
         dataNascimento: form.dataNascimento,
         salario: Number(form.salario || 0),
@@ -274,18 +272,6 @@ export default function CadastroForm({ onSuccess }) {
               );
             })}
           </select>
-        </div>
-
-        <div className="grupo-entrada checkbox">
-          <label>
-            <input
-              type="checkbox"
-              name="emFerias"
-              checked={form.emFerias}
-              onChange={handleChange}
-            />
-            Em férias
-          </label>
         </div>
       </div>
 

@@ -72,6 +72,16 @@
   border-color: rgba(185, 142, 62, 0.35);
 }
 
+.sugestao-produto.sem-estoque {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.sugestao-produto.sem-estoque:hover {
+  background: #fff;
+  border-color: transparent;
+}
+
 .sugestao-produto span {
   font-weight: 600;
 }
@@ -165,9 +175,15 @@
 .form-movimentacao .bloco-produtos,
 .form-movimentacao .campo-observacao,
 .form-movimentacao .resumo-movimentacao,
+.form-movimentacao .resumo-compra,
 .form-movimentacao .primario,
+.form-movimentacao .transferencia-header,
 .acoes-movimentacao {
   grid-column: 1 / -1;
+}
+
+.movimentacao-grid.tres-colunas {
+  grid-template-columns: repeat(3, minmax(200px, 1fr));
 }
 
 .form-movimentacao .campo-observacao {
