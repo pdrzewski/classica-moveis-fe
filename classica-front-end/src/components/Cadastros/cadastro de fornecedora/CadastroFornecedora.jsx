@@ -57,7 +57,11 @@ export default function CadastroFornecedora({ onSuccess }) {
 
   const handleChange = (event) => {
     const { name, value } = event.target;
-    const valor = name === 'cep' ? value.replace(/\D/g, '').slice(0, 8) : value;
+    const valor = name === 'cep'
+      ? value.replace(/\D/g, '').slice(0, 8)
+      : name === 'numero'
+        ? value.replace(/\D/g, '')
+        : value;
 
     setForm({ ...form, [name]: valor });
 
@@ -196,6 +200,8 @@ export default function CadastroFornecedora({ onSuccess }) {
             name="numero"
             value={form.numero}
             onChange={handleChange}
+            inputMode="numeric"
+            pattern="[0-9]*"
             required
           />
         </div>

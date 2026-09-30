@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import api from '../services/Api';
 
 const listarDados = (resposta) => {
@@ -10,19 +10,112 @@ const listarDados = (resposta) => {
   return [];
 };
 
+const valorDo = (item, ...chaves) => chaves.map((chave) => item?.[chave]).find((valor) => valor !== undefined && valor !== null);
+const idDaLoja = (loja) => valorDo(loja, 'id', 'estabelecimentoId', 'estabelecimento_id');
+const nomeDaLoja = (loja) => loja?.nome || loja?.titulo || loja?.descricao || `Loja ${idDaLoja(loja)}`;
+const dataLocalHoje = () => {
+  const hoje = new Date();
+  const ano = hoje.getFullYear();
+  const mes = String(hoje.getMonth() + 1).padStart(2, '0');
+  const dia = String(hoje.getDate()).padStart(2, '0');
+  return `${ano}-${mes}-${dia}`;
+};
+const camposClienteVazios = {
+  nome: '',
+  documento: '',
+  ie: '',
+  telefone1: '',
+  telefone2: '',
+  email: '',
+  observacao: '',
+  cep: '',
+  logradouro: '',
+  numero: '',
+  complemento: '',
+  bairro: '',
+  cidade: '',
+  estado: '',
+};
+const documentoNormalizado = (documento) => String(documento || '').replace(/\D/g, '');
+const normalizarChave = (chave) => String(chave).toLowerCase().replace(/[^a-z0-9]/g, '');
+const idDiretoDoCliente = (cliente) => {
+  if (!cliente || typeof cliente !== 'object') return null;
+  const id = Object.entries(cliente).find(([chave, valor]) => (
+    ['id', 'clienteid'].includes(normalizarChave(chave)) && valor !== undefined && valor !== null
+  ))?.[1];
+  return id ?? null;
+};
+const enderecoIdDoCliente = (cliente) => {
+  const nomesIdEndereco = new Set(['enderecoid', 'fk_endereco', 'fkEndereco'].map(normalizarChave));
+  const idDireto = Object.entries(cliente || {}).find(([chave, valor]) => (
+    nomesIdEndereco.has(normalizarChave(chave)) && valor !== undefined && valor !== null && typeof valor !== 'object'
+  ))?.[1];
+  if (idDireto != null) return idDireto;
+  const nomesEndereco = new Set(['endereco', 'address', 'enderecoCliente', 'fkEndereco', 'enderecoDTO', 'enderecoEntrega'].map(normalizarChave));
+  const endereco = Object.entries(cliente || {}).find(([chave, valor]) => (
+    nomesEndereco.has(normalizarChave(chave)) && valor && typeof valor === 'object'
+  ))?.[1];
+  return endereco ? idDiretoDoCliente(endereco) : null;
+};
+const valorDeCliente = (objeto, ...chaves) => {
+  if (!objeto || typeof objeto !== 'object') return undefined;
+  for (const chave of chaves) {
+    const entrada = Object.entries(objeto).find(([nome]) => normalizarChave(nome) === normalizarChave(chave));
+    if (entrada && entrada[1] !== undefined && entrada[1] !== null) return entrada[1];
+  }
+  return undefined;
+};
+const extrairClientesResposta = (dados, profundidade = 0) => {
+  if (profundidade > 4 || dados == null) return [];
+  if (Array.isArray(dados)) return dados.flatMap((item) => extrairClientesResposta(item, profundidade + 1));
+  if (typeof dados !== 'object') return [];
+
+  const documento = valorDeCliente(dados, 'documento', 'cpf', 'documentoCliente', 'cpfCliente');
+  if (documento) return [dados];
+
+  return ['cliente', 'data', 'dados', 'resultado', 'result', 'content', 'clientes', 'items', 'itens', 'records']
+    .flatMap((chave) => extrairClientesResposta(valorDeCliente(dados, chave), profundidade + 1));
+};
+const enderecoDoCliente = (cliente) => valorDeCliente(cliente, 'endereco', 'address', 'enderecoCliente', 'endereco_cliente') || cliente || {};
+const identificarMatriz = (lojas) => lojas.find((loja) => (
+  loja?.matriz === true
+  || loja?.isMatriz === true
+  || loja?.principal === true
+  || /matriz/i.test(String(loja?.nome || loja?.titulo || loja?.descricao || ''))
+)) || lojas.find((loja) => Number(idDaLoja(loja)) === 1);
+
 export default function MovimentacaoForm({ tipoInicial = 'COMPRA', tipoLabel = tipoInicial, direcaoInicial = 'ENTRADA', transferencia = false }) {
   const [direcao, setDirecao] = useState(direcaoInicial);
   const [tipoMovimentacao, setTipoMovimentacao] = useState(tipoInicial);
   const [produtos, setProdutos] = useState([]);
   const [produtosFiltrados, setProdutosFiltrados] = useState([]);
   const [lojas, setLojas] = useState([]);
+  const [estoqueApi, setEstoqueApi] = useState(null);
+  const [movimentacoesEstoque, setMovimentacoesEstoque] = useState(null);
+  const [estoqueCarregado, setEstoqueCarregado] = useState(false);
+  const [distribuicaoVenda, setDistribuicaoVenda] = useState(null);
+  const [quantidadesOutrasLojas, setQuantidadesOutrasLojas] = useState({});
+  const [erroDistribuicao, setErroDistribuicao] = useState('');
   const [colaboradores, setColaboradores] = useState([]);
   const [clientes, setClientes] = useState([]);
+  const [clienteBusca, setClienteBusca] = useState('');
+  const [clientesSugeridos, setClientesSugeridos] = useState([]);
+  const [buscandoClientes, setBuscandoClientes] = useState(false);
+  const buscaClientesAtual = useRef(0);
+  const [modalClienteAberto, setModalClienteAberto] = useState(false);
+  const [clienteForm, setClienteForm] = useState(camposClienteVazios);
+  const [clienteEncontrado, setClienteEncontrado] = useState(null);
+  const [estadoBuscaCliente, setEstadoBuscaCliente] = useState('inicial');
+  const [buscandoCliente, setBuscandoCliente] = useState(false);
+  const [salvandoCliente, setSalvandoCliente] = useState(false);
+  const [buscandoCepCliente, setBuscandoCepCliente] = useState(false);
+  const [erroCliente, setErroCliente] = useState('');
+  const consultaClienteAtual = useRef(0);
   const [itens, setItens] = useState([]);
   const [produtoBusca, setProdutoBusca] = useState('');
   const [motivo, setMotivo] = useState('');
   const [observacao, setObservacao] = useState('');
-  const [dataMovimentacao, setDataMovimentacao] = useState('');
+  const [dataMovimentacao, setDataMovimentacao] = useState(dataLocalHoje);
   const [lojaSelecionada, setLojaSelecionada] = useState('');
   const [lojaOrigemId, setLojaOrigemId] = useState('');
   const [lojaDestinoId, setLojaDestinoId] = useState('');
@@ -46,6 +139,277 @@ export default function MovimentacaoForm({ tipoInicial = 'COMPRA', tipoLabel = t
       return nome.includes(texto) || sku.includes(texto) || codigo.includes(texto);
     }).slice(0, 8);
   }, [produtos, produtosFiltrados, produtoBusca]);
+
+  const lojaMatriz = identificarMatriz(lojas);
+  const venda = tipoMovimentacao === 'VENDA';
+
+  const obterSaldo = (produtoId, lojaId) => {
+    const saldoApi = estoqueApi?.find((saldo) => (
+      Number(valorDo(saldo, 'produtoId', 'produto_id', 'fkProduto', 'fk_produto') ?? saldo?.produto?.id)
+        === Number(produtoId)
+      && Number(valorDo(saldo, 'lojaId', 'estabelecimentoId', 'estabelecimento_id')) === Number(lojaId)
+    ));
+
+    if (saldoApi) return Math.max(0, Number(valorDo(saldoApi, 'quantidade', 'saldo', 'estoqueAtual', 'qtd') || 0));
+
+    return Math.max(0, (movimentacoesEstoque || []).reduce((saldo, movimentacao) => {
+      const tipo = String(valorDo(movimentacao, 'tipoMovimentacao', 'tipo_movimentacao', 'tipo') || '').toUpperCase();
+      const origemId = valorDo(movimentacao, 'estabelecimentoOrigemId', 'estabelecimento_origem_id', 'origemId');
+      const destinoId = valorDo(movimentacao, 'estabelecimentoDestinoId', 'estabelecimento_destino_id', 'destinoId');
+      const itensMovimentacao = movimentacao.itens || movimentacao.items || movimentacao.itemMovimentacoes || [];
+      const quantidade = itensMovimentacao.reduce((total, item) => {
+        const idItem = valorDo(item, 'produtoId', 'produto_id', 'fkProduto', 'fk_produto') ?? item?.produto?.id;
+        return Number(idItem) === Number(produtoId)
+          ? total + Number(valorDo(item, 'quantidade', 'qtd', 'quantidadeProduto') || 0)
+          : total;
+      }, 0);
+
+      if (['COMPRA', 'DEVOLUCAO_CLIENTE', 'AJUSTE_ENTRADA'].includes(tipo) && Number(destinoId) === Number(lojaId)) {
+        return saldo + quantidade;
+      }
+      if (['VENDA', 'QUEBRA', 'DEVOLUCAO_FORNECEDOR', 'AJUSTE_SAIDA'].includes(tipo) && Number(origemId) === Number(lojaId)) {
+        return saldo - quantidade;
+      }
+      if (tipo === 'TRANSFERENCIA') {
+        if (Number(origemId) === Number(lojaId)) return saldo - quantidade;
+        if (Number(destinoId) === Number(lojaId)) return saldo + quantidade;
+      }
+      return saldo;
+    }, 0));
+  };
+
+  const iniciarCadastroCliente = () => {
+    setClienteForm(camposClienteVazios);
+    setClienteEncontrado(null);
+    setEstadoBuscaCliente('inicial');
+    setErroCliente('');
+    setModalClienteAberto(true);
+  };
+
+  const buscarClientesPorNome = async (nome) => {
+    const termo = nome.trim();
+    const buscaId = ++buscaClientesAtual.current;
+    if (termo.length < 2) {
+      setClientesSugeridos([]);
+      setBuscandoClientes(false);
+      return;
+    }
+
+    setBuscandoClientes(true);
+    try {
+      const resposta = await api.get(`/clientes/nome/${encodeURIComponent(termo)}`)
+        .catch(() => api.get(`/api/clientes/nome/${encodeURIComponent(termo)}`));
+      if (buscaId === buscaClientesAtual.current) setClientesSugeridos(listarDados(resposta));
+    } catch {
+      if (buscaId === buscaClientesAtual.current) setClientesSugeridos([]);
+    } finally {
+      if (buscaId === buscaClientesAtual.current) setBuscandoClientes(false);
+    }
+  };
+
+  const selecionarClienteVenda = (cliente) => {
+    const id = cliente.id || cliente.clienteId || cliente.cliente_id;
+    setClientes((listaAtual) => [
+      cliente,
+      ...listaAtual.filter((item) => Number(item.id || item.clienteId || item.cliente_id) !== Number(id)),
+    ]);
+    setClienteId(String(id));
+    setClienteBusca(cliente.nome || '');
+    setClientesSugeridos([]);
+  };
+
+  const limparClienteVenda = () => {
+    setClienteId('');
+    setClienteBusca('');
+    setClientesSugeridos([]);
+    buscaClientesAtual.current += 1;
+  };
+
+  const alterarBuscaClienteVenda = (valor) => {
+    setClienteBusca(valor);
+    setClienteId('');
+    if (valor.trim().length < 2) setClientesSugeridos([]);
+  };
+
+  const buscarClientePorDocumento = async (documentoInformado = clienteForm.documento) => {
+    const documento = documentoNormalizado(documentoInformado);
+    if (documento.length !== 11) {
+      return;
+    }
+
+    const consultaId = ++consultaClienteAtual.current;
+    setBuscandoCliente(true);
+    setErroCliente('');
+    setEstadoBuscaCliente('buscando');
+
+    try {
+      let resposta;
+      try {
+        resposta = await api.get('/clientes', { params: { documento } });
+      } catch {
+        resposta = await api.get('/api/clientes', { params: { documento } });
+      }
+
+      const encontrados = extrairClientesResposta(resposta?.data);
+      const cliente = encontrados.find((item) => (
+        documentoNormalizado(valorDeCliente(item, 'documento', 'cpf', 'documentoCliente', 'cpfCliente')) === documento
+      ));
+      if (consultaId !== consultaClienteAtual.current) return;
+
+      if (!cliente) {
+        setClienteEncontrado(null);
+        setClienteForm({ ...camposClienteVazios, documento });
+        setEstadoBuscaCliente('novo');
+        return;
+      }
+
+      const endereco = enderecoDoCliente(cliente);
+      setClienteEncontrado(cliente);
+      setClienteForm({
+        ...camposClienteVazios,
+        nome: valorDeCliente(cliente, 'nome', 'nomeCompleto', 'razaoSocial') || '',
+        documento: valorDeCliente(cliente, 'documento', 'cpf', 'documentoCliente', 'cpfCliente') || documento,
+        ie: valorDeCliente(cliente, 'ie', 'inscricaoEstadual', 'inscricao_estadual') || '',
+        telefone1: valorDeCliente(cliente, 'telefone1', 'telefone_1', 'telefone', 'celular') || '',
+        telefone2: valorDeCliente(cliente, 'telefone2', 'telefone_2', 'telefoneAlternativo') || '',
+        email: valorDeCliente(cliente, 'email', 'eMail') || '',
+        observacao: valorDeCliente(cliente, 'observacao', 'observacaoCliente') || '',
+        cep: valorDeCliente(endereco, 'cep', 'codigoPostal') || '',
+        logradouro: valorDeCliente(endereco, 'logradouro', 'rua', 'addressLine') || '',
+        numero: String(valorDeCliente(endereco, 'numero', 'numeroEndereco', 'numero_endereco') || ''),
+        complemento: valorDeCliente(endereco, 'complemento', 'complement') || '',
+        bairro: valorDeCliente(endereco, 'bairro', 'district') || '',
+        cidade: valorDeCliente(endereco, 'cidade', 'localidade', 'city') || '',
+        estado: valorDeCliente(endereco, 'estado', 'uf', 'state') || '',
+      });
+      setEstadoBuscaCliente('encontrado');
+    } catch (err) {
+      if (consultaId !== consultaClienteAtual.current) return;
+      setEstadoBuscaCliente('inicial');
+      setErroCliente(err.response?.data?.message || 'Não foi possível consultar o cliente. Tente novamente.');
+    } finally {
+      if (consultaId === consultaClienteAtual.current) setBuscandoCliente(false);
+    }
+  };
+
+  const alterarCampoCliente = (event) => {
+    const { name, value } = event.target;
+    const valor = name === 'documento'
+      ? value.replace(/\D/g, '').slice(0, 11)
+      : name === 'cep'
+        ? value.replace(/\D/g, '').slice(0, 8)
+        : name === 'numero'
+          ? value.replace(/\D/g, '')
+          : value;
+
+    setClienteForm((formAtual) => ({ ...formAtual, [name]: valor }));
+    if (name === 'documento') {
+      consultaClienteAtual.current += 1;
+      setBuscandoCliente(false);
+      setEstadoBuscaCliente('inicial');
+      setClienteEncontrado(null);
+      setErroCliente('');
+      if (documentoNormalizado(valor).length === 11) buscarClientePorDocumento(valor);
+    }
+    if (name === 'cep' && valor.length === 8) buscarEnderecoClientePorCep(valor);
+  };
+
+  const buscarEnderecoClientePorCep = async (cep) => {
+    if (cep.length !== 8) return;
+    setBuscandoCepCliente(true);
+    setErroCliente('');
+    try {
+      const resposta = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
+      const endereco = await resposta.json();
+      if (endereco.erro) {
+        setErroCliente('CEP não encontrado. Verifique o valor informado.');
+        return;
+      }
+      setClienteForm((formAtual) => ({
+        ...formAtual,
+        cep,
+        logradouro: endereco.logradouro || '',
+        bairro: endereco.bairro || '',
+        cidade: endereco.localidade || '',
+        estado: endereco.uf || '',
+      }));
+    } catch {
+      setErroCliente('Não foi possível buscar o endereço do CEP informado.');
+    } finally {
+      setBuscandoCepCliente(false);
+    }
+  };
+
+  const salvarClienteDaVenda = async (event) => {
+    event.preventDefault();
+    if (!['novo', 'encontrado'].includes(estadoBuscaCliente) || salvandoCliente || buscandoCliente) return;
+    setSalvandoCliente(true);
+    setErroCliente('');
+
+    const payload = {
+      nome: clienteForm.nome,
+      documento: documentoNormalizado(clienteForm.documento),
+      telefone1: clienteForm.telefone1,
+      telefone2: clienteForm.telefone2 || null,
+      email: clienteForm.email || null,
+      observacao: clienteForm.observacao || null,
+      ie: clienteForm.ie || null,
+      endereco: {
+        cep: clienteForm.cep,
+        logradouro: clienteForm.logradouro,
+        numero: clienteForm.numero,
+        complemento: clienteForm.complemento || '',
+        bairro: clienteForm.bairro,
+        cidade: clienteForm.cidade,
+        estado: clienteForm.estado,
+      },
+    };
+
+    try {
+      let clienteSalvo;
+      if (estadoBuscaCliente === 'encontrado' && clienteEncontrado) {
+        const clienteIdExistente = idDiretoDoCliente(clienteEncontrado);
+        if (!clienteIdExistente) throw new Error('O cliente foi localizado, mas a consulta não retornou seu identificador. Consulte novamente antes de salvar.');
+        const enderecoId = enderecoIdDoCliente(clienteEncontrado);
+        const resposta = await api.put(`/clientes/${clienteIdExistente}`, {
+          ...payload,
+          id: Number(clienteIdExistente),
+          enderecoId: enderecoId == null || enderecoId === '' ? null : Number(enderecoId),
+        });
+        clienteSalvo = resposta?.data?.cliente || resposta?.data || { ...clienteEncontrado, ...payload };
+        clienteSalvo = { ...clienteEncontrado, ...clienteSalvo, ...payload, id: clienteIdExistente };
+      } else if (estadoBuscaCliente === 'novo' && !clienteEncontrado) {
+        let resposta;
+        try {
+          resposta = await api.post('/clientes', payload);
+        } catch {
+          resposta = await api.post('/api/clientes', payload);
+        }
+        clienteSalvo = resposta?.data?.cliente || resposta?.data;
+        const clienteIdNovo = clienteSalvo?.id || clienteSalvo?.clienteId || clienteSalvo?.cliente_id;
+        if (!clienteIdNovo) {
+          throw new Error('Cliente cadastrado, mas a API não retornou o identificador para associá-lo à venda.');
+        }
+        clienteSalvo = { ...payload, ...clienteSalvo, id: clienteIdNovo };
+      } else {
+        throw new Error('Confira o CPF antes de salvar os dados do cliente.');
+      }
+
+      const idSalvo = clienteSalvo.id || clienteSalvo.clienteId || clienteSalvo.cliente_id;
+      setClientes((listaAtual) => [
+        clienteSalvo,
+        ...listaAtual.filter((cliente) => Number(cliente.id || cliente.clienteId || cliente.cliente_id) !== Number(idSalvo)),
+      ]);
+      setClienteId(String(idSalvo));
+      setClienteBusca(clienteSalvo.nome || clienteForm.nome);
+      setClientesSugeridos([]);
+      setModalClienteAberto(false);
+    } catch (err) {
+      setErroCliente(err.response?.data?.message || err.message || 'Não foi possível salvar o cliente.');
+    } finally {
+      setSalvandoCliente(false);
+    }
+  };
 
   const buscarProdutos = async (termo = '') => {
     try {
@@ -78,19 +442,29 @@ export default function MovimentacaoForm({ tipoInicial = 'COMPRA', tipoLabel = t
           api.get('/colaboradores').catch(() => api.get('/api/colaboradores')),
           api.get('/clientes').catch(() => api.get('/api/clientes')),
         ]);
+        const [respostaEstoque, respostaMovimentacoes] = await Promise.allSettled([
+          api.get('/estoque').catch(() => api.get('/api/estoque')),
+          api.get('/movimentacoes').catch(() => api.get('/api/movimentacoes')),
+        ]);
 
         const lojasCarregadas = listarDados(respostaLojas);
         const colaboradoresCarregados = listarDados(respostaColaboradores);
         const clientesCarregados = listarDados(respostaClientes);
+        const matriz = identificarMatriz(lojasCarregadas);
 
         if (lojasCarregadas.length) {
           setLojas(lojasCarregadas);
           if (!lojaSelecionada) {
-            setLojaSelecionada(String(lojasCarregadas[0].id));
+            const lojaPadrao = tipoMovimentacao === 'VENDA' ? matriz : lojasCarregadas[0];
+            if (lojaPadrao) setLojaSelecionada(String(idDaLoja(lojaPadrao)));
           }
-          if (!lojaOrigemId) setLojaOrigemId(String(lojasCarregadas[0].id));
-          if (!lojaDestinoId) setLojaDestinoId(String(lojasCarregadas[1]?.id || lojasCarregadas[0].id));
+          if (!lojaOrigemId) setLojaOrigemId(String(idDaLoja(lojasCarregadas[0])));
+          if (!lojaDestinoId) setLojaDestinoId(String(idDaLoja(lojasCarregadas[1] || lojasCarregadas[0])));
         }
+
+        setEstoqueApi(respostaEstoque.status === 'fulfilled' ? listarDados(respostaEstoque.value) : null);
+        setMovimentacoesEstoque(respostaMovimentacoes.status === 'fulfilled' ? listarDados(respostaMovimentacoes.value) : null);
+        setEstoqueCarregado(respostaEstoque.status === 'fulfilled' || respostaMovimentacoes.status === 'fulfilled');
 
         if (colaboradoresCarregados.length) {
           setColaboradores(colaboradoresCarregados);
@@ -117,6 +491,15 @@ export default function MovimentacaoForm({ tipoInicial = 'COMPRA', tipoLabel = t
   useEffect(() => {
     buscarProdutos(produtoBusca);
   }, [produtoBusca]);
+
+  useEffect(() => {
+    if (!venda || !clienteBusca.trim() || clienteBusca.trim().length < 2 || clienteId) {
+      setClientesSugeridos([]);
+      return undefined;
+    }
+    const timeout = setTimeout(() => buscarClientesPorNome(clienteBusca), 300);
+    return () => clearTimeout(timeout);
+  }, [clienteBusca, clienteId, venda]);
 
   const valorTotal = useMemo(() => {
     return itens.reduce((total, item) => {
@@ -195,54 +578,72 @@ export default function MovimentacaoForm({ tipoInicial = 'COMPRA', tipoLabel = t
     setProdutoBusca('');
     setMotivo('');
     setObservacao('');
-    setDataMovimentacao('');
-    setLojaSelecionada(lojas[0] ? String(lojas[0].id) : '');
-    setLojaOrigemId(lojas[0] ? String(lojas[0].id) : '');
-    setLojaDestinoId(lojas[1] ? String(lojas[1].id) : lojas[0] ? String(lojas[0].id) : '');
+    setDataMovimentacao(dataLocalHoje());
+    setLojaSelecionada(venda ? String(idDaLoja(lojaMatriz) || '') : lojas[0] ? String(idDaLoja(lojas[0])) : '');
+    setLojaOrigemId(lojas[0] ? String(idDaLoja(lojas[0])) : '');
+    setLojaDestinoId(lojas[1] ? String(idDaLoja(lojas[1])) : lojas[0] ? String(idDaLoja(lojas[0])) : '');
     setColaboradorId(colaboradores[0] ? String(colaboradores[0].id) : '');
-    setClienteId(clientes[0] ? String(clientes[0].id) : '');
+    setClienteId(!venda && clientes[0] ? String(clientes[0].id || clientes[0].clienteId || clientes[0].cliente_id) : '');
+    setClienteBusca('');
+    setClientesSugeridos([]);
     setFormaPagamento('DINHEIRO');
     setStatus('PENDENTE');
     setNotice('');
+    setDistribuicaoVenda(null);
+    setQuantidadesOutrasLojas({});
+    setErroDistribuicao('');
   };
 
-  const handleSubmit = async (event) => {
-    event.preventDefault();
-    setLoading(true);
-    setNotice('');
-
+  const criarPayload = (itensDaOrigem, lojaOrigemVenda = null) => {
     const colaboradorSelecionado = colaboradores.find((colaborador) => Number(colaborador.id) === Number(colaboradorId));
-    const clienteSelecionado = clientes.find((cliente) => Number(cliente.id) === Number(clienteId));
-    const lojaAtual = lojas.find((loja) => Number(loja.id) === Number(lojaSelecionada));
-    const lojaOrigem = lojas.find((loja) => Number(loja.id) === Number(lojaOrigemId));
-    const lojaDestino = lojas.find((loja) => Number(loja.id) === Number(lojaDestinoId));
+    const clienteSelecionado = clientes.find((cliente) => Number(cliente.id || cliente.clienteId || cliente.cliente_id) === Number(clienteId));
+    const lojaAtual = lojas.find((loja) => Number(idDaLoja(loja)) === Number(lojaSelecionada));
+    const lojaOrigem = lojas.find((loja) => Number(idDaLoja(loja)) === Number(lojaOrigemId));
+    const lojaDestino = lojas.find((loja) => Number(idDaLoja(loja)) === Number(lojaDestinoId));
+    const origemVenda = lojaOrigemVenda || lojaMatriz;
 
-    if (transferencia && (!lojaOrigemId || !lojaDestinoId || lojaOrigemId === lojaDestinoId)) {
-      setNotice('Selecione duas lojas diferentes para realizar a transferência.');
-      setLoading(false);
-      return;
-    }
-
-    const payload = {
-      id: Date.now(),
+    return {
+      id: Date.now() + Math.floor(Math.random() * 100000),
       dataHora: dataMovimentacao ? new Date(`${dataMovimentacao}T00:00:00`).toISOString() : new Date().toISOString(),
       tipoMovimentacao,
       status: 'PENDENTE',
       formaPagamento: tipoMovimentacao === 'COMPRA' ? formaPagamento : 'NAO_APLICAVEL',
       observacao,
-      valorTotal: Number(valorTotal.toFixed(2)),
+      valorTotal: Number(itensDaOrigem.reduce((total, item) => total + Number(item.subtotal || 0), 0).toFixed(2)),
       colaboradorId: Number(colaboradorId || colaboradorSelecionado?.id || 1),
       colaboradorNome: colaboradorSelecionado?.nome || 'Usuário atual',
-      estabelecimentoOrigemId: transferencia ? Number(lojaOrigemId) : direcao === 'SAIDA' ? Number(lojaSelecionada || lojaAtual?.id || 1) : 1,
-      estabelecimentoOrigemNome: transferencia ? (lojaOrigem?.nome || lojaOrigem?.titulo || 'Loja de origem') : direcao === 'SAIDA' ? (lojaAtual?.nome || 'Loja atual') : 'Estoque principal',
-      estabelecimentoDestinoId: transferencia ? Number(lojaDestinoId) : direcao === 'ENTRADA' ? Number(lojaSelecionada || lojaAtual?.id || 1) : 1,
-      estabelecimentoDestinoNome: transferencia ? (lojaDestino?.nome || lojaDestino?.titulo || 'Loja de destino') : direcao === 'ENTRADA' ? (lojaAtual?.nome || 'Loja atual') : 'Estoque principal',
-      clienteId: tipoMovimentacao === 'COMPRA' ? Number(clienteId || clienteSelecionado?.id || null) : null,
-      clienteNome: tipoMovimentacao === 'COMPRA' ? (clienteSelecionado?.nome || '') : '',
+      estabelecimentoOrigemId: transferencia
+        ? Number(lojaOrigemId)
+        : venda
+          ? Number(idDaLoja(origemVenda))
+          : direcao === 'SAIDA'
+            ? Number(lojaSelecionada || idDaLoja(lojaAtual) || 1)
+            : 1,
+      estabelecimentoOrigemNome: transferencia
+        ? (nomeDaLoja(lojaOrigem) || 'Loja de origem')
+        : venda
+          ? nomeDaLoja(origemVenda)
+          : direcao === 'SAIDA'
+            ? (lojaAtual?.nome || lojaAtual?.titulo || 'Loja atual')
+            : 'Estoque principal',
+      estabelecimentoDestinoId: transferencia
+        ? Number(lojaDestinoId)
+        : direcao === 'ENTRADA'
+          ? Number(lojaSelecionada || idDaLoja(lojaAtual) || 1)
+          : 1,
+      estabelecimentoDestinoNome: transferencia
+        ? (nomeDaLoja(lojaDestino) || 'Loja de destino')
+        : direcao === 'ENTRADA'
+          ? (lojaAtual?.nome || lojaAtual?.titulo || 'Loja atual')
+          : 'Estoque principal',
+      clienteId: ['COMPRA', 'VENDA'].includes(tipoMovimentacao) && (clienteId || clienteSelecionado?.id || clienteSelecionado?.clienteId || clienteSelecionado?.cliente_id)
+        ? Number(clienteId || clienteSelecionado?.id || clienteSelecionado?.clienteId || clienteSelecionado?.cliente_id)
+        : null,
+      clienteNome: ['COMPRA', 'VENDA'].includes(tipoMovimentacao) ? (clienteSelecionado?.nome || '') : '',
       fornecedorId: null,
       fornecedorNome: '',
-      itens: itens.map((item) => ({
-        id: Date.now() + Math.random(),
+      itens: itensDaOrigem.map((item) => ({
+        id: Date.now() + Math.floor(Math.random() * 100000),
         produtoId: Number(item.produtoId),
         produtoNome: item.produtoNome,
         quantidade: Number(item.quantidade || 0),
@@ -251,23 +652,151 @@ export default function MovimentacaoForm({ tipoInicial = 'COMPRA', tipoLabel = t
         subtotal: Number(item.subtotal || 0),
       })),
     };
+  };
 
+  const salvarPayloads = async (payloads) => {
+    setLoading(true);
+    let salvos = 0;
     try {
-      await api.post('/movimentacoes', payload).catch(() => api.post('/api/movimentacoes', payload));
+      for (const payload of payloads) {
+        await api.post('/movimentacoes', payload).catch(() => api.post('/api/movimentacoes', payload));
+        salvos += 1;
+      }
+
       setNotice('Registro salvo com sucesso.');
       setItens([]);
       setMotivo('');
       setObservacao('');
-      setDataMovimentacao('');
-      setLojaSelecionada('');
+      setDataMovimentacao(dataLocalHoje());
+      setLojaSelecionada(venda ? String(idDaLoja(lojaMatriz) || '') : '');
       setProdutoBusca('');
       setStatus('PENDENTE');
       setFormaPagamento('DINHEIRO');
+      setDistribuicaoVenda(null);
+      setQuantidadesOutrasLojas({});
     } catch (err) {
-      setNotice(err.response?.data?.message || err.message || 'Erro ao registrar movimentação.');
+      setNotice(salvos > 0
+        ? `Venda parcialmente registrada (${salvos} de ${payloads.length} origens). Verifique o histórico antes de tentar novamente.`
+        : err.response?.data?.message || err.message || 'Erro ao registrar movimentação.');
+      if (salvos > 0) setItens([]);
     } finally {
       setLoading(false);
     }
+  };
+
+  const abrirDistribuicaoVenda = () => {
+    setNotice('');
+    if (!lojaMatriz) {
+      setNotice('Não foi possível identificar a matriz. Confira o nome do estabelecimento cadastrado.');
+      return;
+    }
+    if (!estoqueCarregado) {
+      setNotice('Não foi possível consultar o estoque das lojas. Tente novamente mais tarde.');
+      return;
+    }
+
+    const faltas = itens.map((item) => {
+      const disponivelMatriz = obterSaldo(item.produtoId, idDaLoja(lojaMatriz));
+      const quantidadeDesejada = Number(item.quantidade || 0);
+      return {
+        ...item,
+        quantidadeDesejada,
+        disponivelMatriz,
+        faltante: Math.max(0, quantidadeDesejada - disponivelMatriz),
+        saldosLojas: lojas
+          .filter((loja) => Number(idDaLoja(loja)) !== Number(idDaLoja(lojaMatriz)))
+          .map((loja) => ({ loja, disponivel: obterSaldo(item.produtoId, idDaLoja(loja)) })),
+      };
+    }).filter((item) => item.faltante > 0);
+
+    if (faltas.length === 0) {
+      void salvarPayloads([criarPayload(itens, lojaMatriz)]);
+      return;
+    }
+
+    setDistribuicaoVenda(faltas);
+    setQuantidadesOutrasLojas(Object.fromEntries(faltas.map((item) => [item.produtoId, {}])));
+    setErroDistribuicao('');
+  };
+
+  const alterarQuantidadeOrigem = (produtoId, lojaId, valor, saldoMaximo, faltante) => {
+    setQuantidadesOutrasLojas((atuais) => {
+      const produtoAtual = atuais[produtoId] || {};
+      const totalOutrasLojas = Object.entries(produtoAtual)
+        .filter(([id]) => Number(id) !== Number(lojaId))
+        .reduce((total, [, quantidade]) => total + Number(quantidade || 0), 0);
+      const maximoPermitido = Math.max(0, Math.min(saldoMaximo, faltante - totalOutrasLojas));
+      const quantidade = valor === '' ? 0 : Math.max(0, Math.min(Number(valor) || 0, maximoPermitido));
+
+      return { ...atuais, [produtoId]: { ...produtoAtual, [lojaId]: quantidade } };
+    });
+  };
+
+  const confirmarDistribuicaoVenda = async () => {
+    const distribuicaoInvalida = distribuicaoVenda?.some((item) => {
+      const alocacoes = quantidadesOutrasLojas[item.produtoId] || {};
+      const totalAlocado = Object.values(alocacoes).reduce((total, quantidade) => total + Number(quantidade || 0), 0);
+      return totalAlocado !== item.faltante || item.saldosLojas.some(({ loja, disponivel }) => (
+        Number(alocacoes[idDaLoja(loja)] || 0) > disponivel
+      ));
+    });
+
+    if (distribuicaoInvalida) {
+      setErroDistribuicao('Distribua exatamente a quantidade que falta, respeitando o saldo de cada loja.');
+      return;
+    }
+
+    const grupos = new Map();
+    const adicionarAoGrupo = (loja, item, quantidade) => {
+      if (!quantidade) return;
+      const lojaId = String(idDaLoja(loja));
+      if (!grupos.has(lojaId)) grupos.set(lojaId, { loja, itens: [] });
+      const proporcao = quantidade / Number(item.quantidade || 1);
+      grupos.get(lojaId).itens.push({
+        ...item,
+        quantidade,
+        subtotal: Number((Number(item.subtotal || 0) * proporcao).toFixed(2)),
+        desconto: Number((Number(item.desconto || 0) * proporcao).toFixed(2)),
+      });
+    };
+
+    itens.forEach((item) => {
+      const saldoMatriz = obterSaldo(item.produtoId, idDaLoja(lojaMatriz));
+      const quantidadeMatriz = Math.min(Number(item.quantidade || 0), saldoMatriz);
+      adicionarAoGrupo(lojaMatriz, item, quantidadeMatriz);
+
+      const alocacoes = quantidadesOutrasLojas[item.produtoId] || {};
+      Object.entries(alocacoes).forEach(([lojaId, quantidade]) => {
+        const loja = lojas.find((itemLoja) => Number(idDaLoja(itemLoja)) === Number(lojaId));
+        adicionarAoGrupo(loja, item, Number(quantidade || 0));
+      });
+    });
+
+    setDistribuicaoVenda(null);
+    setErroDistribuicao('');
+    await salvarPayloads(Array.from(grupos.values()).map(({ loja, itens: itensDaLoja }) => criarPayload(itensDaLoja, loja)));
+  };
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    setNotice('');
+
+    if (venda && !clienteId) {
+      setNotice('Selecione o cliente da venda.');
+      return;
+    }
+
+    if (transferencia && (!lojaOrigemId || !lojaDestinoId || lojaOrigemId === lojaDestinoId)) {
+      setNotice('Selecione duas lojas diferentes para realizar a transferência.');
+      return;
+    }
+
+    if (venda) {
+      abrirDistribuicaoVenda();
+      return;
+    }
+
+    await salvarPayloads([criarPayload(itens)]);
   };
 
   return (
@@ -297,17 +826,93 @@ export default function MovimentacaoForm({ tipoInicial = 'COMPRA', tipoLabel = t
             </select>
           </div>
 
-          {tipoMovimentacao === 'COMPRA' && (
+          {['COMPRA', 'VENDA'].includes(tipoMovimentacao) && (
             <div className="campo">
               <label>Cliente</label>
-              <select value={clienteId} onChange={(event) => setClienteId(event.target.value)}>
-                <option value="">Selecione o cliente</option>
-                {clientes.map((cliente) => (
-                  <option key={cliente.id} value={cliente.id}>
-                    {cliente.nome || cliente.titulo || `Cliente ${cliente.id}`}
-                  </option>
-                ))}
-              </select>
+              {tipoMovimentacao === 'COMPRA' ? (
+                <select value={clienteId} onChange={(event) => setClienteId(event.target.value)}>
+                  <option value="">Selecione o cliente</option>
+                  {clientes.map((cliente) => {
+                    const id = cliente.id || cliente.clienteId || cliente.cliente_id;
+                    return (
+                      <option key={id} value={id}>
+                        {cliente.nome || cliente.titulo || `Cliente ${id}`}
+                      </option>
+                    );
+                  })}
+                </select>
+              ) : (
+                <div className="busca-wrapper busca-cliente-movimentacao">
+                  <input
+                    type="text"
+                    value={clienteBusca}
+                    onChange={(event) => alterarBuscaClienteVenda(event.target.value)}
+                    onFocus={() => {
+                      if (clienteBusca.trim().length >= 2 && !clienteId) buscarClientesPorNome(clienteBusca);
+                    }}
+                    placeholder={clienteId ? 'Cliente selecionado' : 'Digite o nome do cliente (mín. 2 letras)'}
+                    autoComplete="off"
+                    required={!clienteId}
+                  />
+                  {buscandoClientes && <span className="spinner" />}
+                  {clienteId && (
+                    <button type="button" className="btn-limpar-cliente" onClick={limparClienteVenda} title="Remover cliente">
+                      ×
+                    </button>
+                  )}
+                  {clientesSugeridos.length > 0 && !clienteId && (
+                    <div className="lista-sugestoes-clientes" role="listbox" aria-label="Clientes sugeridos">
+                      {clientesSugeridos.map((cliente) => {
+                        const id = cliente.id || cliente.clienteId || cliente.cliente_id;
+                        return (
+                          <button
+                            key={id}
+                            type="button"
+                            className="sugestao-cliente"
+                            onClick={() => selecionarClienteVenda(cliente)}
+                          >
+                            <span className="cliente-nome">{cliente.nome}</span>
+                            <span className="cliente-detalhes">
+                              {cliente.documento ? `CPF/CNPJ: ${cliente.documento}` : ''}
+                              {cliente.telefone1 ? ` | Tel: ${cliente.telefone1}` : ''}
+                              {cliente.email ? ` | ${cliente.email}` : ''}
+                              {cliente.cidade && cliente.estado ? ` | ${cliente.cidade}/${cliente.estado}` : ''}
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
+              {venda && clienteId && (() => {
+                const clienteAtual = clientes.find((cliente) => Number(cliente.id || cliente.clienteId || cliente.cliente_id) === Number(clienteId));
+                if (!clienteAtual) return null;
+                const endereco = enderecoDoCliente(clienteAtual);
+                return (
+                  <div className="cliente-selecionado-card">
+                    <strong>{clienteAtual.nome}</strong>
+                    <div className="cliente-infos">
+                      {(clienteAtual.documento || clienteAtual.cpf) && <span>CPF: {clienteAtual.documento || clienteAtual.cpf}</span>}
+                      {(clienteAtual.telefone1 || clienteAtual.telefone) && <span>Tel: {clienteAtual.telefone1 || clienteAtual.telefone}</span>}
+                      {clienteAtual.email && <span>{clienteAtual.email}</span>}
+                      {valorDeCliente(endereco, 'logradouro', 'rua') && (
+                        <span>
+                          {valorDeCliente(endereco, 'logradouro', 'rua')}, {valorDeCliente(endereco, 'numero', 'numeroEndereco') || ''}
+                          {valorDeCliente(endereco, 'complemento') ? ` - ${valorDeCliente(endereco, 'complemento')}` : ''}
+                          {' - '}{valorDeCliente(endereco, 'bairro') || ''}, {valorDeCliente(endereco, 'cidade', 'localidade') || ''}
+                          /{valorDeCliente(endereco, 'estado', 'uf') || ''} - CEP: {valorDeCliente(endereco, 'cep') || ''}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                );
+              })()}
+              {venda && (
+                <button type="button" className="btn-adicionar-cliente-venda" onClick={iniciarCadastroCliente}>
+                  + Adicionar cliente
+                </button>
+              )}
             </div>
           )}
         </div>
@@ -330,12 +935,17 @@ export default function MovimentacaoForm({ tipoInicial = 'COMPRA', tipoLabel = t
                 </select>
               </div>
             </>
+          ) : venda ? (
+            <div className="campo">
+              <label>Loja de origem</label>
+              <input value={lojaMatriz ? `${nomeDaLoja(lojaMatriz)} (Matriz)` : 'Matriz não identificada'} readOnly />
+            </div>
           ) : (
             <div className="campo">
               <label>Loja</label>
               <select value={lojaSelecionada} onChange={(event) => setLojaSelecionada(event.target.value)}>
                 <option value="">Selecione a loja</option>
-                {lojas.map((loja) => <option key={loja.id} value={loja.id}>{loja.nome || loja.titulo || `Loja ${loja.id}`}</option>)}
+                {lojas.map((loja) => <option key={idDaLoja(loja)} value={idDaLoja(loja)}>{nomeDaLoja(loja)}</option>)}
               </select>
             </div>
           )}
@@ -414,12 +1024,12 @@ export default function MovimentacaoForm({ tipoInicial = 'COMPRA', tipoLabel = t
               {itens.map((item) => (
                 <div key={item.produtoId} className="item-movimentacao">
                   <span>{item.produtoNome}</span>
-                  <input
-                    type="number"
-                    min="1"
-                    value={item.quantidade}
-                    onChange={(event) => alterarQuantidade(item.produtoId, event.target.value)}
-                  />
+<input
+                      type="number"
+                      min="1"
+                      value={String(item.quantidade)}
+                      onChange={(event) => alterarQuantidade(item.produtoId, event.target.value)}
+                    />
                   <button type="button" className="btn-remover" onClick={() => removerProduto(item.produtoId)}>
                     ×
                   </button>
@@ -487,11 +1097,176 @@ export default function MovimentacaoForm({ tipoInicial = 'COMPRA', tipoLabel = t
         {notice && <div className="aviso">{notice}</div>}
 
         <div className="acoes-movimentacao rodape-acoes">
-          <button className="primario" type="submit" disabled={loading || itens.length === 0}>
+          <button className="primario" type="submit" disabled={loading || itens.length === 0 || (venda && !clienteId)}>
             {loading ? 'Salvando...' : 'Salvar movimentação'}
           </button>
         </div>
       </form>
+
+      {distribuicaoVenda && (
+        <div className="camada-modal modal-distribuicao-venda" role="presentation">
+          <section className="cartao-modal modal-estoque-venda" role="dialog" aria-modal="true" aria-labelledby="titulo-distribuicao-venda">
+            <p className="titulo-pequeno">Estoque da matriz insuficiente</p>
+            <h2 id="titulo-distribuicao-venda">Escolha de quais lojas retirar</h2>
+            <p className="texto-modal-venda">A quantidade disponível na matriz será usada primeiro. Distribua apenas o que está faltando.</p>
+
+            <div className="lista-distribuicao-venda">
+              {distribuicaoVenda.map((item) => {
+                const alocacoes = quantidadesOutrasLojas[item.produtoId] || {};
+                const totalAlocado = Object.values(alocacoes).reduce((total, quantidade) => total + Number(quantidade || 0), 0);
+                const totalDisponivel = item.saldosLojas.reduce((total, saldo) => total + saldo.disponivel, 0);
+
+                return (
+                  <section key={item.produtoId} className="linha-distribuicao-venda">
+                    <div className="resumo-produto-venda">
+                      <strong>{item.produtoNome}</strong>
+                      <span>Solicitado: {item.quantidadeDesejada} | Matriz: {item.disponivelMatriz} | Faltam: {item.faltante}</span>
+                    </div>
+
+                    {item.saldosLojas.map(({ loja, disponivel }) => (
+                      <label key={idDaLoja(loja)} className="origem-loja-venda">
+                        <span>{nomeDaLoja(loja)} <small>Disponível: {disponivel}</small></span>
+                        <input
+                          type="number"
+                          min="0"
+                          max={disponivel}
+                          step="1"
+                          value={alocacoes[idDaLoja(loja)] || 0}
+                          disabled={disponivel <= 0}
+                          onChange={(event) => alterarQuantidadeOrigem(
+                            item.produtoId,
+                            idDaLoja(loja),
+                            event.target.value,
+                            disponivel,
+                            item.faltante
+                          )}
+                          aria-label={`Quantidade de ${item.produtoNome} retirada de ${nomeDaLoja(loja)}`}
+                        />
+                      </label>
+                    ))}
+
+                    <div className="cobertura-venda">
+                      <span>Quantidade distribuída</span>
+                      <strong>{totalAlocado} / {item.faltante}</strong>
+                      {totalDisponivel < item.faltante && <small>Estoque das demais lojas insuficiente para cobrir a falta.</small>}
+                    </div>
+                  </section>
+                );
+              })}
+            </div>
+
+            {erroDistribuicao && <div className="aviso erro-distribuicao-venda">{erroDistribuicao}</div>}
+
+            <div className="acoes-distribuicao-venda">
+              <button type="button" className="btn-cancelar" onClick={() => setDistribuicaoVenda(null)} disabled={loading}>
+                Voltar à venda
+              </button>
+              <button type="button" className="primario" onClick={confirmarDistribuicaoVenda} disabled={loading}>
+                {loading ? 'Salvando...' : 'Confirmar distribuição'}
+              </button>
+            </div>
+          </section>
+        </div>
+      )}
+
+      {modalClienteAberto && (
+        <div className="camada-modal modal-cliente-venda">
+          <section className="cartao-modal cartao-cliente-venda" role="dialog" aria-modal="true" aria-labelledby="titulo-cliente-venda">
+            <button
+              type="button"
+              className="fechar"
+              aria-label="Fechar cadastro de cliente"
+              onClick={() => setModalClienteAberto(false)}
+              disabled={salvandoCliente}
+            >
+              ×
+            </button>
+            <p className="titulo-pequeno">Venda</p>
+            <h2 id="titulo-cliente-venda">Adicionar cliente</h2>
+
+            <form onSubmit={salvarClienteDaVenda} className="form-cliente-venda">
+              <div className="grade-cliente-venda">
+                <label className="campo-cpf-cliente-venda">
+                  CPF
+                  <span className="linha-busca-cpf-venda">
+                    <input
+                      autoFocus
+                      type="text"
+                      name="documento"
+                      value={clienteForm.documento}
+                      onChange={alterarCampoCliente}
+                      placeholder="Digite o CPF"
+                      inputMode="numeric"
+                      required
+                    />
+                  </span>
+                  {buscandoCliente && <small>Consultando CPF...</small>}
+                </label>
+
+                {estadoBuscaCliente === 'novo' && <p className="resultado-busca-cliente-venda">CPF não cadastrado. Preencha os dados para cadastrar.</p>}
+                {estadoBuscaCliente === 'encontrado' && <p className="resultado-busca-cliente-venda">Cliente localizado. Revise ou altere os dados antes de salvar.</p>}
+
+                {Object.entries({
+                  ie: 'IE',
+                  nome: 'Nome',
+                  telefone1: 'Telefone 1',
+                  telefone2: 'Telefone 2',
+                  email: 'E-mail',
+                  observacao: 'Observação',
+                  cep: 'CEP',
+                  logradouro: 'Logradouro',
+                  numero: 'Número',
+                  complemento: 'Complemento',
+                  bairro: 'Bairro',
+                  cidade: 'Cidade',
+                  estado: 'Estado',
+                }).map(([name, label]) => (
+                  <label key={name} className={name === 'observacao' ? 'campo-largo-cliente-venda' : ''}>
+                    {label}
+                    {name === 'observacao' ? (
+                      <textarea
+                        name={name}
+                        value={clienteForm[name]}
+                        onChange={alterarCampoCliente}
+                        rows={3}
+                        disabled={estadoBuscaCliente !== 'novo' && estadoBuscaCliente !== 'encontrado'}
+                      />
+                    ) : (
+                      <input
+                        type={name === 'email' ? 'email' : 'text'}
+                        name={name}
+                        value={clienteForm[name]}
+                        onChange={alterarCampoCliente}
+                        onBlur={name === 'cep' ? () => buscarEnderecoClientePorCep(clienteForm.cep) : undefined}
+                        inputMode={name === 'numero' ? 'numeric' : undefined}
+                        pattern={name === 'numero' ? '[0-9]*' : undefined}
+                        required={['nome', 'telefone1', 'cep', 'logradouro', 'numero', 'bairro', 'cidade', 'estado'].includes(name)}
+                        disabled={estadoBuscaCliente !== 'novo' && estadoBuscaCliente !== 'encontrado'}
+                      />
+                    )}
+                    {name === 'cep' && buscandoCepCliente && <small>Buscando endereço...</small>}
+                  </label>
+                ))}
+              </div>
+
+              {erroCliente && <p className="erro erro-cliente-venda">{erroCliente}</p>}
+
+              <div className="acoes-cliente-venda">
+                <button type="button" className="btn-cancelar" onClick={() => setModalClienteAberto(false)} disabled={salvandoCliente}>
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  className="primario"
+                  disabled={salvandoCliente || buscandoCliente || (estadoBuscaCliente !== 'novo' && estadoBuscaCliente !== 'encontrado')}
+                >
+                  {salvandoCliente ? 'Salvando...' : clienteEncontrado ? 'Salvar alterações' : 'Cadastrar cliente'}
+                </button>
+              </div>
+            </form>
+          </section>
+        </div>
+      )}
     </div>
   );
 }

@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import api from '../services/Api';
+import { useAuth } from '../context/AuthContext';
 
 export default function LoginForm({ onSuccess }) {
+  const { login: authLogin } = useAuth();
   const [form, setForm] = useState({ login: '', senha: '' });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -19,7 +20,7 @@ export default function LoginForm({ onSuccess }) {
     setError('');
 
     try {
-      await api.post('/login', form);
+      await authLogin(form);
       onSuccess?.();
     } catch (err) {
       setError(err.response?.data?.message || 'Usuário ou senha incorretos.');

@@ -19,7 +19,7 @@
 .camada-modal {
   position: fixed;
   inset: 0;
-  z-index: 10;
+  z-index: 50;
   display: grid;
   place-items: center;
   padding: 20px;
@@ -84,14 +84,14 @@
   border-color: #a16c35;
   background: none;
   cursor: pointer;
-  font-size: 30px;
+  font-size: 40px;
   color: #a16c35;
   line-height: 0;
   width: 45px;
   height: 45px;
   padding: 0;
   display: grid;
-  font-size:xx-large;
+  font-size: 40px;
   place-items: center;
 }
 
@@ -161,6 +161,18 @@
   font-size: 13px;
 }
 
+.camada-modal.modal-cliente-venda,
+.camada-modal.modal-distribuicao-venda {
+  inset: 64px 0 0;
+  z-index: 110;
+  padding: 12px;
+}
+
+.modal-cliente-venda .cartao-cliente-venda,
+.modal-distribuicao-venda .modal-estoque-venda {
+  max-height: calc(100dvh - 88px);
+}
+
 @media (max-width: 900px) {
   .camada-modal {
     padding: 12px;
@@ -199,7 +211,7 @@
   .fechar {
     top: 12px;
     right: 12px;
-    font-size: 20px;
+    font-size: 32px;
   }
 
   .etiqueta-estoque {
