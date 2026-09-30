@@ -225,6 +225,7 @@ export default function CadastroCliente({ onSuccess }) {
             value={form.numero}
             onChange={handleChange}
             inputMode="numeric"
+            pattern="[0-9]*"
             required
           />
         </div>

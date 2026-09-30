@@ -201,6 +201,7 @@ export default function CadastroFornecedora({ onSuccess }) {
             value={form.numero}
             onChange={handleChange}
             inputMode="numeric"
+            pattern="[0-9]*"
             required
           />
         </div>

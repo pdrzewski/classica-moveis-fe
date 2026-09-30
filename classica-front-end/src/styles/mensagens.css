@@ -161,6 +161,18 @@
   font-size: 13px;
 }
 
+.camada-modal.modal-cliente-venda,
+.camada-modal.modal-distribuicao-venda {
+  inset: 64px 0 0;
+  z-index: 110;
+  padding: 12px;
+}
+
+.modal-cliente-venda .cartao-cliente-venda,
+.modal-distribuicao-venda .modal-estoque-venda {
+  max-height: calc(100dvh - 88px);
+}
+
 @media (max-width: 900px) {
   .camada-modal {
     padding: 12px;

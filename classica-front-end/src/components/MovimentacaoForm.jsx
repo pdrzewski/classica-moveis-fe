@@ -37,7 +37,46 @@ const camposClienteVazios = {
   estado: '',
 };
 const documentoNormalizado = (documento) => String(documento || '').replace(/\D/g, '');
-const enderecoDoCliente = (cliente) => cliente?.endereco || cliente?.address || cliente || {};
+const normalizarChave = (chave) => String(chave).toLowerCase().replace(/[^a-z0-9]/g, '');
+const idDiretoDoCliente = (cliente) => {
+  if (!cliente || typeof cliente !== 'object') return null;
+  const id = Object.entries(cliente).find(([chave, valor]) => (
+    ['id', 'clienteid'].includes(normalizarChave(chave)) && valor !== undefined && valor !== null
+  ))?.[1];
+  return id ?? null;
+};
+const enderecoIdDoCliente = (cliente) => {
+  const nomesIdEndereco = new Set(['enderecoid', 'fk_endereco', 'fkEndereco'].map(normalizarChave));
+  const idDireto = Object.entries(cliente || {}).find(([chave, valor]) => (
+    nomesIdEndereco.has(normalizarChave(chave)) && valor !== undefined && valor !== null && typeof valor !== 'object'
+  ))?.[1];
+  if (idDireto != null) return idDireto;
+  const nomesEndereco = new Set(['endereco', 'address', 'enderecoCliente', 'fkEndereco', 'enderecoDTO', 'enderecoEntrega'].map(normalizarChave));
+  const endereco = Object.entries(cliente || {}).find(([chave, valor]) => (
+    nomesEndereco.has(normalizarChave(chave)) && valor && typeof valor === 'object'
+  ))?.[1];
+  return endereco ? idDiretoDoCliente(endereco) : null;
+};
+const valorDeCliente = (objeto, ...chaves) => {
+  if (!objeto || typeof objeto !== 'object') return undefined;
+  for (const chave of chaves) {
+    const entrada = Object.entries(objeto).find(([nome]) => normalizarChave(nome) === normalizarChave(chave));
+    if (entrada && entrada[1] !== undefined && entrada[1] !== null) return entrada[1];
+  }
+  return undefined;
+};
+const extrairClientesResposta = (dados, profundidade = 0) => {
+  if (profundidade > 4 || dados == null) return [];
+  if (Array.isArray(dados)) return dados.flatMap((item) => extrairClientesResposta(item, profundidade + 1));
+  if (typeof dados !== 'object') return [];
+
+  const documento = valorDeCliente(dados, 'documento', 'cpf', 'documentoCliente', 'cpfCliente');
+  if (documento) return [dados];
+
+  return ['cliente', 'data', 'dados', 'resultado', 'result', 'content', 'clientes', 'items', 'itens', 'records']
+    .flatMap((chave) => extrairClientesResposta(valorDeCliente(dados, chave), profundidade + 1));
+};
+const enderecoDoCliente = (cliente) => valorDeCliente(cliente, 'endereco', 'address', 'enderecoCliente', 'endereco_cliente') || cliente || {};
 const identificarMatriz = (lojas) => lojas.find((loja) => (
   loja?.matriz === true
   || loja?.isMatriz === true
@@ -59,6 +98,10 @@ export default function MovimentacaoForm({ tipoInicial = 'COMPRA', tipoLabel = t
   const [erroDistribuicao, setErroDistribuicao] = useState('');
   const [colaboradores, setColaboradores] = useState([]);
   const [clientes, setClientes] = useState([]);
+  const [clienteBusca, setClienteBusca] = useState('');
+  const [clientesSugeridos, setClientesSugeridos] = useState([]);
+  const [buscandoClientes, setBuscandoClientes] = useState(false);
+  const buscaClientesAtual = useRef(0);
   const [modalClienteAberto, setModalClienteAberto] = useState(false);
   const [clienteForm, setClienteForm] = useState(camposClienteVazios);
   const [clienteEncontrado, setClienteEncontrado] = useState(null);
@@ -143,6 +186,51 @@ export default function MovimentacaoForm({ tipoInicial = 'COMPRA', tipoLabel = t
     setModalClienteAberto(true);
   };
 
+  const buscarClientesPorNome = async (nome) => {
+    const termo = nome.trim();
+    const buscaId = ++buscaClientesAtual.current;
+    if (termo.length < 2) {
+      setClientesSugeridos([]);
+      setBuscandoClientes(false);
+      return;
+    }
+
+    setBuscandoClientes(true);
+    try {
+      const resposta = await api.get(`/clientes/nome/${encodeURIComponent(termo)}`)
+        .catch(() => api.get(`/api/clientes/nome/${encodeURIComponent(termo)}`));
+      if (buscaId === buscaClientesAtual.current) setClientesSugeridos(listarDados(resposta));
+    } catch {
+      if (buscaId === buscaClientesAtual.current) setClientesSugeridos([]);
+    } finally {
+      if (buscaId === buscaClientesAtual.current) setBuscandoClientes(false);
+    }
+  };
+
+  const selecionarClienteVenda = (cliente) => {
+    const id = cliente.id || cliente.clienteId || cliente.cliente_id;
+    setClientes((listaAtual) => [
+      cliente,
+      ...listaAtual.filter((item) => Number(item.id || item.clienteId || item.cliente_id) !== Number(id)),
+    ]);
+    setClienteId(String(id));
+    setClienteBusca(cliente.nome || '');
+    setClientesSugeridos([]);
+  };
+
+  const limparClienteVenda = () => {
+    setClienteId('');
+    setClienteBusca('');
+    setClientesSugeridos([]);
+    buscaClientesAtual.current += 1;
+  };
+
+  const alterarBuscaClienteVenda = (valor) => {
+    setClienteBusca(valor);
+    setClienteId('');
+    if (valor.trim().length < 2) setClientesSugeridos([]);
+  };
+
   const buscarClientePorDocumento = async (documentoInformado = clienteForm.documento) => {
     const documento = documentoNormalizado(documentoInformado);
     if (documento.length !== 11) {
@@ -162,11 +250,9 @@ export default function MovimentacaoForm({ tipoInicial = 'COMPRA', tipoLabel = t
         resposta = await api.get('/api/clientes', { params: { documento } });
       }
 
-      const dados = resposta?.data;
-      const lista = listarDados(resposta);
-      const candidatoDireto = dados?.cliente || (dados && !Array.isArray(dados) && !dados.content && !dados.dados ? dados : null);
-      const cliente = [candidatoDireto, ...lista].find((item) => (
-        documentoNormalizado(item?.documento || item?.cpf) === documento
+      const encontrados = extrairClientesResposta(resposta?.data);
+      const cliente = encontrados.find((item) => (
+        documentoNormalizado(valorDeCliente(item, 'documento', 'cpf', 'documentoCliente', 'cpfCliente')) === documento
       ));
       if (consultaId !== consultaClienteAtual.current) return;
 
@@ -181,20 +267,20 @@ export default function MovimentacaoForm({ tipoInicial = 'COMPRA', tipoLabel = t
       setClienteEncontrado(cliente);
       setClienteForm({
         ...camposClienteVazios,
-        nome: cliente.nome || '',
-        documento: cliente.documento || cliente.cpf || documento,
-        ie: cliente.ie || cliente.inscricaoEstadual || '',
-        telefone1: cliente.telefone1 || cliente.telefone || '',
-        telefone2: cliente.telefone2 || '',
-        email: cliente.email || '',
-        observacao: cliente.observacao || '',
-        cep: endereco.cep || '',
-        logradouro: endereco.logradouro || '',
-        numero: String(endereco.numero || ''),
-        complemento: endereco.complemento || '',
-        bairro: endereco.bairro || '',
-        cidade: endereco.cidade || '',
-        estado: endereco.estado || endereco.uf || '',
+        nome: valorDeCliente(cliente, 'nome', 'nomeCompleto', 'razaoSocial') || '',
+        documento: valorDeCliente(cliente, 'documento', 'cpf', 'documentoCliente', 'cpfCliente') || documento,
+        ie: valorDeCliente(cliente, 'ie', 'inscricaoEstadual', 'inscricao_estadual') || '',
+        telefone1: valorDeCliente(cliente, 'telefone1', 'telefone_1', 'telefone', 'celular') || '',
+        telefone2: valorDeCliente(cliente, 'telefone2', 'telefone_2', 'telefoneAlternativo') || '',
+        email: valorDeCliente(cliente, 'email', 'eMail') || '',
+        observacao: valorDeCliente(cliente, 'observacao', 'observacaoCliente') || '',
+        cep: valorDeCliente(endereco, 'cep', 'codigoPostal') || '',
+        logradouro: valorDeCliente(endereco, 'logradouro', 'rua', 'addressLine') || '',
+        numero: String(valorDeCliente(endereco, 'numero', 'numeroEndereco', 'numero_endereco') || ''),
+        complemento: valorDeCliente(endereco, 'complemento', 'complement') || '',
+        bairro: valorDeCliente(endereco, 'bairro', 'district') || '',
+        cidade: valorDeCliente(endereco, 'cidade', 'localidade', 'city') || '',
+        estado: valorDeCliente(endereco, 'estado', 'uf', 'state') || '',
       });
       setEstadoBuscaCliente('encontrado');
     } catch (err) {
@@ -256,7 +342,7 @@ export default function MovimentacaoForm({ tipoInicial = 'COMPRA', tipoLabel = t
 
   const salvarClienteDaVenda = async (event) => {
     event.preventDefault();
-    if (estadoBuscaCliente !== 'novo' && estadoBuscaCliente !== 'encontrado') return;
+    if (!['novo', 'encontrado'].includes(estadoBuscaCliente) || salvandoCliente || buscandoCliente) return;
     setSalvandoCliente(true);
     setErroCliente('');
 
@@ -281,13 +367,18 @@ export default function MovimentacaoForm({ tipoInicial = 'COMPRA', tipoLabel = t
 
     try {
       let clienteSalvo;
-      if (clienteEncontrado) {
-        const clienteIdExistente = clienteEncontrado.id || clienteEncontrado.clienteId || clienteEncontrado.cliente_id;
-        const resposta = await api.put(`/clientes/${clienteIdExistente}`, payload)
-          .catch(() => api.put(`/api/clientes/${clienteIdExistente}`, payload));
+      if (estadoBuscaCliente === 'encontrado' && clienteEncontrado) {
+        const clienteIdExistente = idDiretoDoCliente(clienteEncontrado);
+        if (!clienteIdExistente) throw new Error('O cliente foi localizado, mas a consulta não retornou seu identificador. Consulte novamente antes de salvar.');
+        const enderecoId = enderecoIdDoCliente(clienteEncontrado);
+        const resposta = await api.put(`/clientes/${clienteIdExistente}`, {
+          ...payload,
+          id: Number(clienteIdExistente),
+          enderecoId: enderecoId == null || enderecoId === '' ? null : Number(enderecoId),
+        });
         clienteSalvo = resposta?.data?.cliente || resposta?.data || { ...clienteEncontrado, ...payload };
         clienteSalvo = { ...clienteEncontrado, ...clienteSalvo, ...payload, id: clienteIdExistente };
-      } else {
+      } else if (estadoBuscaCliente === 'novo' && !clienteEncontrado) {
         let resposta;
         try {
           resposta = await api.post('/clientes', payload);
@@ -300,6 +391,8 @@ export default function MovimentacaoForm({ tipoInicial = 'COMPRA', tipoLabel = t
           throw new Error('Cliente cadastrado, mas a API não retornou o identificador para associá-lo à venda.');
         }
         clienteSalvo = { ...payload, ...clienteSalvo, id: clienteIdNovo };
+      } else {
+        throw new Error('Confira o CPF antes de salvar os dados do cliente.');
       }
 
       const idSalvo = clienteSalvo.id || clienteSalvo.clienteId || clienteSalvo.cliente_id;
@@ -308,6 +401,8 @@ export default function MovimentacaoForm({ tipoInicial = 'COMPRA', tipoLabel = t
         ...listaAtual.filter((cliente) => Number(cliente.id || cliente.clienteId || cliente.cliente_id) !== Number(idSalvo)),
       ]);
       setClienteId(String(idSalvo));
+      setClienteBusca(clienteSalvo.nome || clienteForm.nome);
+      setClientesSugeridos([]);
       setModalClienteAberto(false);
     } catch (err) {
       setErroCliente(err.response?.data?.message || err.message || 'Não foi possível salvar o cliente.');
@@ -397,6 +492,15 @@ export default function MovimentacaoForm({ tipoInicial = 'COMPRA', tipoLabel = t
     buscarProdutos(produtoBusca);
   }, [produtoBusca]);
 
+  useEffect(() => {
+    if (!venda || !clienteBusca.trim() || clienteBusca.trim().length < 2 || clienteId) {
+      setClientesSugeridos([]);
+      return undefined;
+    }
+    const timeout = setTimeout(() => buscarClientesPorNome(clienteBusca), 300);
+    return () => clearTimeout(timeout);
+  }, [clienteBusca, clienteId, venda]);
+
   const valorTotal = useMemo(() => {
     return itens.reduce((total, item) => {
       const produto = produtos.find((produtoAtual) => produtoAtual.id === Number(item.produtoId));
@@ -479,7 +583,9 @@ export default function MovimentacaoForm({ tipoInicial = 'COMPRA', tipoLabel = t
     setLojaOrigemId(lojas[0] ? String(idDaLoja(lojas[0])) : '');
     setLojaDestinoId(lojas[1] ? String(idDaLoja(lojas[1])) : lojas[0] ? String(idDaLoja(lojas[0])) : '');
     setColaboradorId(colaboradores[0] ? String(colaboradores[0].id) : '');
-    setClienteId(clientes[0] ? String(clientes[0].id) : '');
+    setClienteId(!venda && clientes[0] ? String(clientes[0].id || clientes[0].clienteId || clientes[0].cliente_id) : '');
+    setClienteBusca('');
+    setClientesSugeridos([]);
     setFormaPagamento('DINHEIRO');
     setStatus('PENDENTE');
     setNotice('');
@@ -675,6 +781,11 @@ export default function MovimentacaoForm({ tipoInicial = 'COMPRA', tipoLabel = t
     event.preventDefault();
     setNotice('');
 
+    if (venda && !clienteId) {
+      setNotice('Selecione o cliente da venda.');
+      return;
+    }
+
     if (transferencia && (!lojaOrigemId || !lojaDestinoId || lojaOrigemId === lojaDestinoId)) {
       setNotice('Selecione duas lojas diferentes para realizar a transferência.');
       return;
@@ -731,11 +842,72 @@ export default function MovimentacaoForm({ tipoInicial = 'COMPRA', tipoLabel = t
                   })}
                 </select>
               ) : (
-                <span>
-                  {clientes.find((cliente) => Number(cliente.id || cliente.clienteId || cliente.cliente_id) === Number(clienteId))?.nome
-                    || 'Nenhum cliente selecionado'}
-                </span>
+                <div className="busca-wrapper busca-cliente-movimentacao">
+                  <input
+                    type="text"
+                    value={clienteBusca}
+                    onChange={(event) => alterarBuscaClienteVenda(event.target.value)}
+                    onFocus={() => {
+                      if (clienteBusca.trim().length >= 2 && !clienteId) buscarClientesPorNome(clienteBusca);
+                    }}
+                    placeholder={clienteId ? 'Cliente selecionado' : 'Digite o nome do cliente (mín. 2 letras)'}
+                    autoComplete="off"
+                    required={!clienteId}
+                  />
+                  {buscandoClientes && <span className="spinner" />}
+                  {clienteId && (
+                    <button type="button" className="btn-limpar-cliente" onClick={limparClienteVenda} title="Remover cliente">
+                      ×
+                    </button>
+                  )}
+                  {clientesSugeridos.length > 0 && !clienteId && (
+                    <div className="lista-sugestoes-clientes" role="listbox" aria-label="Clientes sugeridos">
+                      {clientesSugeridos.map((cliente) => {
+                        const id = cliente.id || cliente.clienteId || cliente.cliente_id;
+                        return (
+                          <button
+                            key={id}
+                            type="button"
+                            className="sugestao-cliente"
+                            onClick={() => selecionarClienteVenda(cliente)}
+                          >
+                            <span className="cliente-nome">{cliente.nome}</span>
+                            <span className="cliente-detalhes">
+                              {cliente.documento ? `CPF/CNPJ: ${cliente.documento}` : ''}
+                              {cliente.telefone1 ? ` | Tel: ${cliente.telefone1}` : ''}
+                              {cliente.email ? ` | ${cliente.email}` : ''}
+                              {cliente.cidade && cliente.estado ? ` | ${cliente.cidade}/${cliente.estado}` : ''}
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
               )}
+              {venda && clienteId && (() => {
+                const clienteAtual = clientes.find((cliente) => Number(cliente.id || cliente.clienteId || cliente.cliente_id) === Number(clienteId));
+                if (!clienteAtual) return null;
+                const endereco = enderecoDoCliente(clienteAtual);
+                return (
+                  <div className="cliente-selecionado-card">
+                    <strong>{clienteAtual.nome}</strong>
+                    <div className="cliente-infos">
+                      {(clienteAtual.documento || clienteAtual.cpf) && <span>CPF: {clienteAtual.documento || clienteAtual.cpf}</span>}
+                      {(clienteAtual.telefone1 || clienteAtual.telefone) && <span>Tel: {clienteAtual.telefone1 || clienteAtual.telefone}</span>}
+                      {clienteAtual.email && <span>{clienteAtual.email}</span>}
+                      {valorDeCliente(endereco, 'logradouro', 'rua') && (
+                        <span>
+                          {valorDeCliente(endereco, 'logradouro', 'rua')}, {valorDeCliente(endereco, 'numero', 'numeroEndereco') || ''}
+                          {valorDeCliente(endereco, 'complemento') ? ` - ${valorDeCliente(endereco, 'complemento')}` : ''}
+                          {' - '}{valorDeCliente(endereco, 'bairro') || ''}, {valorDeCliente(endereco, 'cidade', 'localidade') || ''}
+                          /{valorDeCliente(endereco, 'estado', 'uf') || ''} - CEP: {valorDeCliente(endereco, 'cep') || ''}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                );
+              })()}
               {venda && (
                 <button type="button" className="btn-adicionar-cliente-venda" onClick={iniciarCadastroCliente}>
                   + Adicionar cliente
@@ -925,7 +1097,7 @@ export default function MovimentacaoForm({ tipoInicial = 'COMPRA', tipoLabel = t
         {notice && <div className="aviso">{notice}</div>}
 
         <div className="acoes-movimentacao rodape-acoes">
-          <button className="primario" type="submit" disabled={loading || itens.length === 0}>
+          <button className="primario" type="submit" disabled={loading || itens.length === 0 || (venda && !clienteId)}>
             {loading ? 'Salvando...' : 'Salvar movimentação'}
           </button>
         </div>
@@ -1067,6 +1239,7 @@ export default function MovimentacaoForm({ tipoInicial = 'COMPRA', tipoLabel = t
                         onChange={alterarCampoCliente}
                         onBlur={name === 'cep' ? () => buscarEnderecoClientePorCep(clienteForm.cep) : undefined}
                         inputMode={name === 'numero' ? 'numeric' : undefined}
+                        pattern={name === 'numero' ? '[0-9]*' : undefined}
                         required={['nome', 'telefone1', 'cep', 'logradouro', 'numero', 'bairro', 'cidade', 'estado'].includes(name)}
                         disabled={estadoBuscaCliente !== 'novo' && estadoBuscaCliente !== 'encontrado'}
                       />
