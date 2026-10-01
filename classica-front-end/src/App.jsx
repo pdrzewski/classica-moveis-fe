@@ -10,6 +10,7 @@ import Relatorios from './pages/Relatorios';
 import VendasPendentes from './pages/VendasPendentes';
 import { AuthProvider } from './context/AuthContext';
 import AjusteEstoque from './pages/AjusteEstoque';
+import CargosPage from './pages/CargosPage';
 
 export default function App() {
   return (
@@ -28,6 +29,7 @@ export default function App() {
             <Route path="/historico" element={<Historico />} />
             <Route path="/ajuste-estoque" element={<AjusteEstoque />} />
             <Route path="/relatorios" element={<Relatorios />} />
+            <Route path="/cargos" element={<CargosPage />} />
           </Route>
         </Routes>
       </AuthProvider>
