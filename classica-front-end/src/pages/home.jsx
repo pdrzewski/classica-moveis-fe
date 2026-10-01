@@ -154,7 +154,7 @@ export default function Home() {
 
     const buscarEstoqueBaixo = async () => {
       try {
-        const resp = await api.get('/produtos/estoque-baixo').catch(() => api.get('/api/produtos/estoque-baixo'));
+        const resp = await api.get('/produtos/estoque-baixo');
         const dados = Array.isArray(resp?.data) ? resp.data : resp?.data?.content || resp?.data?.dados || resp?.data || [];
         setEstoqueBaixo(dados.slice(0, 5));
       } catch {

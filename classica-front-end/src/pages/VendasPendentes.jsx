@@ -39,7 +39,7 @@ const ModalDetalhes = ({ venda, onClose }) => {
   return (
     <div className="camada-modal">
       <div className="cartao-modal modal-detalhes" style={{ maxWidth: '700px' }}>
-        <button type="button" className="fechar" onClick={onClose}><IconDetalhes /></button>
+        <button type="button" className="fechar" aria-label="Fechar detalhes" onClick={onClose}>×</button>
         <p className="titulo-pequeno">Venda #{venda.id}</p>
         <h2>Detalhes da venda pendente</h2>
 
@@ -147,7 +147,7 @@ export default function VendasPendentes() {
       if (dataInicio) params.append('dataInicio', dataInicio);
       if (dataFim) params.append('dataFim', dataFim);
 
-      const resp = await api.get(`/movimentacoes/vendas-pendentes?${params.toString()}`).catch(() => api.get(`/api/movimentacoes/vendas-pendentes?${params.toString()}`));
+      const resp = await api.get(`/movimentacoes/vendas-pendentes?${params.toString()}`);
       setVendas(listarDados(resp));
     } catch (err) {
       setErro(err.response?.data?.message || 'Não foi possível carregar as vendas pendentes.');
@@ -165,7 +165,7 @@ export default function VendasPendentes() {
     if (!window.confirm('Marcar esta venda como concluída/entregue?')) return;
     setConcluindo(true);
     try {
-      await api.patch(`/movimentacoes/${vendaId}/concluir`).catch(() => api.patch(`/api/movimentacoes/${vendaId}/concluir`));
+      await api.patch(`/movimentacoes/${vendaId}/concluir`);
       buscarVendas();
     } catch (err) {
       setErro(err.response?.data?.message || 'Erro ao concluir venda.');

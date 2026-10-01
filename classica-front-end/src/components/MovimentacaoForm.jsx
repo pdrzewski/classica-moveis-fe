@@ -91,7 +91,6 @@ export default function MovimentacaoForm({ tipoInicial = 'COMPRA', tipoLabel = t
   const [produtosFiltrados, setProdutosFiltrados] = useState([]);
   const [lojas, setLojas] = useState([]);
   const [estoqueApi, setEstoqueApi] = useState(null);
-  const [movimentacoesEstoque, setMovimentacoesEstoque] = useState(null);
   const [estoqueCarregado, setEstoqueCarregado] = useState(false);
   const [distribuicaoVenda, setDistribuicaoVenda] = useState(null);
   const [quantidadesOutrasLojas, setQuantidadesOutrasLojas] = useState({});
@@ -150,32 +149,9 @@ export default function MovimentacaoForm({ tipoInicial = 'COMPRA', tipoLabel = t
       && Number(valorDo(saldo, 'lojaId', 'estabelecimentoId', 'estabelecimento_id')) === Number(lojaId)
     ));
 
-    if (saldoApi) return Math.max(0, Number(valorDo(saldoApi, 'quantidade', 'saldo', 'estoqueAtual', 'qtd') || 0));
-
-    return Math.max(0, (movimentacoesEstoque || []).reduce((saldo, movimentacao) => {
-      const tipo = String(valorDo(movimentacao, 'tipoMovimentacao', 'tipo_movimentacao', 'tipo') || '').toUpperCase();
-      const origemId = valorDo(movimentacao, 'estabelecimentoOrigemId', 'estabelecimento_origem_id', 'origemId');
-      const destinoId = valorDo(movimentacao, 'estabelecimentoDestinoId', 'estabelecimento_destino_id', 'destinoId');
-      const itensMovimentacao = movimentacao.itens || movimentacao.items || movimentacao.itemMovimentacoes || [];
-      const quantidade = itensMovimentacao.reduce((total, item) => {
-        const idItem = valorDo(item, 'produtoId', 'produto_id', 'fkProduto', 'fk_produto') ?? item?.produto?.id;
-        return Number(idItem) === Number(produtoId)
-          ? total + Number(valorDo(item, 'quantidade', 'qtd', 'quantidadeProduto') || 0)
-          : total;
-      }, 0);
-
-      if (['COMPRA', 'DEVOLUCAO_CLIENTE', 'AJUSTE_ENTRADA'].includes(tipo) && Number(destinoId) === Number(lojaId)) {
-        return saldo + quantidade;
-      }
-      if (['VENDA', 'QUEBRA', 'DEVOLUCAO_FORNECEDOR', 'AJUSTE_SAIDA'].includes(tipo) && Number(origemId) === Number(lojaId)) {
-        return saldo - quantidade;
-      }
-      if (tipo === 'TRANSFERENCIA') {
-        if (Number(origemId) === Number(lojaId)) return saldo - quantidade;
-        if (Number(destinoId) === Number(lojaId)) return saldo + quantidade;
-      }
-      return saldo;
-    }, 0));
+    return saldoApi
+      ? Math.max(0, Number(valorDo(saldoApi, 'saldoDisponivel', 'quantidade', 'saldo', 'estoqueAtual', 'qtd') || 0))
+      : 0;
   };
 
   const iniciarCadastroCliente = () => {
@@ -442,15 +418,15 @@ export default function MovimentacaoForm({ tipoInicial = 'COMPRA', tipoLabel = t
           api.get('/colaboradores').catch(() => api.get('/api/colaboradores')),
           api.get('/clientes').catch(() => api.get('/api/clientes')),
         ]);
-        const [respostaEstoque, respostaMovimentacoes] = await Promise.allSettled([
-          api.get('/estoque').catch(() => api.get('/api/estoque')),
-          api.get('/movimentacoes').catch(() => api.get('/api/movimentacoes')),
-        ]);
-
         const lojasCarregadas = listarDados(respostaLojas);
         const colaboradoresCarregados = listarDados(respostaColaboradores);
         const clientesCarregados = listarDados(respostaClientes);
         const matriz = identificarMatriz(lojasCarregadas);
+        const respostasEstoque = await Promise.allSettled(lojasCarregadas.map(async (loja) => {
+          const lojaId = idDaLoja(loja);
+          const resposta = await api.get(`/estoque/${lojaId}/produtos`);
+          return listarDados(resposta).map((saldo) => ({ ...saldo, estabelecimentoId: lojaId }));
+        }));
 
         if (lojasCarregadas.length) {
           setLojas(lojasCarregadas);
@@ -462,9 +438,11 @@ export default function MovimentacaoForm({ tipoInicial = 'COMPRA', tipoLabel = t
           if (!lojaDestinoId) setLojaDestinoId(String(idDaLoja(lojasCarregadas[1] || lojasCarregadas[0])));
         }
 
-        setEstoqueApi(respostaEstoque.status === 'fulfilled' ? listarDados(respostaEstoque.value) : null);
-        setMovimentacoesEstoque(respostaMovimentacoes.status === 'fulfilled' ? listarDados(respostaMovimentacoes.value) : null);
-        setEstoqueCarregado(respostaEstoque.status === 'fulfilled' || respostaMovimentacoes.status === 'fulfilled');
+        const estoquesCarregados = respostasEstoque.flatMap((resultado) => (
+          resultado.status === 'fulfilled' ? resultado.value : []
+        ));
+        setEstoqueApi(estoquesCarregados);
+        setEstoqueCarregado(lojasCarregadas.length > 0 && respostasEstoque.every((resultado) => resultado.status === 'fulfilled'));
 
         if (colaboradoresCarregados.length) {
           setColaboradores(colaboradoresCarregados);

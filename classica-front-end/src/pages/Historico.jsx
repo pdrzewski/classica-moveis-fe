@@ -25,6 +25,18 @@ const getTipoLabel = (tipo) => {
   return config?.label || tipo;
 };
 
+const formasPagamentoLabels = {
+  DINHEIRO: 'Dinheiro',
+  PIX: 'PIX',
+  CARTAO_CREDITO: 'Cartão de crédito',
+  CARTAO_DEBITO: 'Cartão de débito',
+  BOLETO: 'Boleto',
+  OUTRO: 'Outro',
+  NAO_APLICAVEL: 'Não aplicável',
+};
+
+const getFormaPagamentoLabel = (forma) => formasPagamentoLabels[forma] || forma || '—';
+
 const getStatusClass = (status) => {
   if (status === 'CONCLUIDO') return '';
   if (status === 'CANCELADO') return 'baixo';
@@ -34,14 +46,13 @@ const getStatusClass = (status) => {
 const ModalDetalhes = ({ movimentacao, onClose }) => {
   if (!movimentacao) return null;
 
-  const itens = movimentacao.itens || [];
-  const totalItens = itens.reduce((sum, item) => sum + Number(item.quantidade || 0), 0);
-  const valorTotal = itens.reduce((sum, item) => sum + Number(item.subtotal || 0), 0);
+  const pagamentos = movimentacao.pagamentos || [];
+  const ehVenda = movimentacao.tipoMovimentacao === 'VENDA';
 
   return (
     <div className="camada-modal">
-      <div className="cartao-modal modal-detalhes" style={{ maxWidth: '700px' }}>
-        <button type="button" className="fechar" onClick={onClose}><IconDetalhes /></button>
+      <div className="cartao-modal modal-detalhes">
+        <button type="button" className="fechar" aria-label="Fechar detalhes" onClick={onClose}>×</button>
         <p className="titulo-pequeno">Movimentação #{movimentacao.id}</p>
         <h2>{getTipoLabel(movimentacao.tipoMovimentacao)}</h2>
 
@@ -62,17 +73,33 @@ const ModalDetalhes = ({ movimentacao, onClose }) => {
             <span>Loja origem</span>
             <strong>{movimentacao.estabelecimentoOrigemNome || '—'}</strong>
           </div>
-          <div className="detalhe-item">
-            <span>Loja destino</span>
-            <strong>{movimentacao.estabelecimentoDestinoNome || '—'}</strong>
-          </div>
+          {!ehVenda && (
+            <div className="detalhe-item">
+              <span>Loja destino</span>
+              <strong>{movimentacao.estabelecimentoDestinoNome || '—'}</strong>
+            </div>
+          )}
           <div className="detalhe-item">
             <span>Cliente</span>
             <strong>{movimentacao.clienteNome || '—'}</strong>
           </div>
-          <div className="detalhe-item">
+          <div className={`detalhe-item ${pagamentos.length ? 'detalhe-pagamentos' : ''}`}>
             <span>Forma de pagamento</span>
-            <strong>{movimentacao.formaPagamento || '—'}</strong>
+            {pagamentos.length ? (
+              <ul className="lista-pagamentos-historico">
+                {pagamentos.map((pagamento, indice) => (
+                  <li key={pagamento.id || `${pagamento.formaPagamento}-${indice}`}>
+                    <strong>{getFormaPagamentoLabel(pagamento.formaPagamento)}</strong>
+                    <span>R$ {formatarMoeda(pagamento.valor)}</span>
+                    {Number(pagamento.quantidadeParcelas) > 1 && (
+                      <small>{pagamento.quantidadeParcelas} parcelas</small>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <strong>{getFormaPagamentoLabel(movimentacao.formaPagamento)}</strong>
+            )}
           </div>
           <div className="detalhe-item">
             <span>Total itens</span>
@@ -166,7 +193,7 @@ export default function Historico() {
     setCarregando(true);
     setErro('');
     try {
-      const resp = await api.get('/movimentacoes/historico').catch(() => api.get('/api/movimentacoes/historico'));
+      const resp = await api.get('/movimentacoes/historico');
       setMovimentacoes(listarDados(resp));
     } catch (err) {
       setErro(err.response?.data?.message || 'Não foi possível carregar o histórico.');
@@ -183,7 +210,7 @@ export default function Historico() {
   const handleVerDetalhes = async (mov) => {
     setCarregandoDetalhes(true);
     try {
-      const resp = await api.get(`/movimentacoes/${mov.id}`).catch(() => api.get(`/api/movimentacoes/${mov.id}`));
+      const resp = await api.get(`/movimentacoes/${mov.id}`);
       const detalhes = listarDados(resp);
       if (detalhes.length) {
         setMovimentacaoSelecionada(detalhes[0]);
@@ -283,7 +310,7 @@ export default function Historico() {
                     <td><span className={`etiqueta-estoque`} style={{ background: 'var(--orange-light)', color: 'var(--orange-dark)', borderColor: 'var(--orange)' }}>{getTipoLabel(mov.tipoMovimentacao)}</span></td>
                     <td>{formatarData(mov.dataHora)}</td>
                     <td>{mov.estabelecimentoOrigemNome || '—'}</td>
-                    <td>{mov.estabelecimentoDestinoNome || '—'}</td>
+                    <td>{mov.tipoMovimentacao === 'VENDA' ? '—' : mov.estabelecimentoDestinoNome || '—'}</td>
                     <td>{mov.itens?.reduce((s, i) => s + Number(i.quantidade || 0), 0) || 0}</td>
                     <td><span className={`etiqueta-estoque ${getStatusClass(mov.status)}`}>{mov.status}</span></td>
                     <td>
@@ -307,7 +334,7 @@ export default function Historico() {
       {detalhesAberto && (
         <div className="camada-modal">
           {carregandoDetalhes ? (
-            <div className="cartao-modal modal-detalhes" style={{ maxWidth: '700px' }}>
+            <div className="cartao-modal modal-detalhes">
               <div style={{ padding: '40px', textAlign: 'center' }}>Carregando detalhes...</div>
             </div>
           ) : (

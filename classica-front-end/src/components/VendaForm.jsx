@@ -18,8 +18,8 @@ const nomeDaLoja = (loja) => loja?.nome || loja?.titulo || loja?.descricao || `L
 const formasPagamento = [
   ['PIX', 'PIX'],
   ['DINHEIRO', 'Dinheiro'],
-  ['CARTAO', 'Cartão'],
-  ['CREDITO', 'Crédito'],
+  ['CARTAO_CREDITO', 'Cartão de crédito'],
+  ['CARTAO_DEBITO', 'Cartão de débito'],
   ['BOLETO', 'Boleto'],
 ];
 const formatarMoeda = (valor) => Number(valor || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -618,7 +618,7 @@ export default function VendaForm() {
       let atualizados = atuais.map((pagamento) => {
         if (pagamento.id !== id) return pagamento;
         if (campo === 'formaPagamento') {
-          return { ...pagamento, formaPagamento: valor, parcelas: ['CREDITO', 'BOLETO'].includes(valor) ? pagamento.parcelas || 1 : 1 };
+          return { ...pagamento, formaPagamento: valor, parcelas: valor === 'CARTAO_CREDITO' ? pagamento.parcelas || 1 : 1 };
         }
         return { ...pagamento, [campo]: valor };
       });
@@ -677,17 +677,10 @@ export default function VendaForm() {
           : Math.round(valorOriginal * 100 * (totalGrupo / totalGrupos));
         alocadoCentavos += valorCentavos;
         if (valorCentavos <= 0) return;
-        const centavosParcelaBase = Math.floor(valorCentavos / quantidadeParcelas);
-        const restoCentavos = valorCentavos - (centavosParcelaBase * quantidadeParcelas);
-        const valoresParcelas = Array.from({ length: quantidadeParcelas }, (_, parcelaIndice) => (
-          (centavosParcelaBase + (parcelaIndice < restoCentavos ? 1 : 0)) / 100
-        ));
         alocacoesPorGrupo[indice].push({
           formaPagamento: pagamento.formaPagamento,
           valor: valorCentavos / 100,
-          parcelas: quantidadeParcelas,
-          valorParcela: valoresParcelas[0],
-          valoresParcelas,
+          quantidadeParcelas,
         });
       });
     });
@@ -703,7 +696,6 @@ export default function VendaForm() {
       for (const { loja, itens: itensDaLoja, pagamentos: pagamentosDaOrigem } of gruposComPagamentos) {
         const payload = {
           tipoMovimentacao: 'VENDA',
-          formaPagamento: pagamentos[0]?.formaPagamento || 'PIX',
           pagamentos: pagamentosDaOrigem,
           observacao: observacao || 'Venda de produto',
           estabelecimentoOrigemId: Number(idDaLoja(loja)),
@@ -711,15 +703,18 @@ export default function VendaForm() {
           clienteId: Number(clienteSelecionado.id || clienteSelecionado.clienteId || clienteSelecionado.cliente_id),
           fornecedorId: null,
           colaboradorId: Number(colaboradorSelecionadoId),
-          colaboradorNome: nomeDoColaborador(colaboradorSelecionado),
           itens: itensDaLoja.map((item) => ({
             produtoId: Number(item.produtoId),
             quantidade: paraNumero(item.quantidade),
             valorUnitario: paraNumero(item.valorUnitario),
             desconto: paraNumero(item.desconto),
+            subtotal: Number((
+              (paraNumero(item.valorUnitario) * paraNumero(item.quantidade))
+              - paraNumero(item.desconto)
+            ).toFixed(2)),
           })),
         };
-        await api.post('/movimentacoes', payload).catch(() => api.post('/api/movimentacoes', payload));
+        await api.post('/movimentacoes', payload);
         salvos += 1;
       }
       await buscarEstoqueLojas(lojas);
@@ -1116,7 +1111,7 @@ export default function VendaForm() {
               const valoresParcelas = Array.from({ length: parcelas }, (_, parcelaIndice) => (
                 (parcelaBaseCentavos + (parcelaIndice < restoCentavos ? 1 : 0)) / 100
               ));
-              const aceitaParcelas = ['CREDITO', 'BOLETO'].includes(pagamento.formaPagamento);
+              const aceitaParcelas = pagamento.formaPagamento === 'CARTAO_CREDITO';
               const resumoParcelas = parcelas > 1 ? resumirParcelas(valoresParcelas) : '';
               return (
                 <div className="linha-pagamento-venda" key={pagamento.id}>
