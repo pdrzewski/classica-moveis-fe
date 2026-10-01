@@ -12,16 +12,18 @@
   left: 0;
   right: 0;
   z-index: 100;
-  display: flex;
+  display: grid;
+  grid-template-columns: auto auto minmax(0, 1fr) auto;
   align-items: center;
-  justify-content: space-between;
-  gap: 16px;
+  gap: 12px;
   height: 64px;
-  padding: 0 24px;
+  padding: 0 18px;
   background: var(--cream);
   border-bottom: 1px solid var(--line);
   width: 100%;
+  max-width: 100%;
   box-sizing: border-box;
+  overflow: hidden;
 }
 
 .alternador-menu {
@@ -70,31 +72,34 @@
 .marca {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
+  min-width: 0;
   text-decoration: none;
   color: var(--ink);
   flex-shrink: 0;
-    margin-left: -600px;
-
+  margin-left: 0;
 }
 
 .marca-logo {
-  width: 100px;
-  height: 100px;
+  width: 42px;
+  height: 42px;
   object-fit: contain;
+  flex-shrink: 0;
 }
 
 .marca-nome {
   font-family: 'Space Grotesk', sans-serif;
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 700;
   color: var(--ink);
   letter-spacing: -0.02em;
+  white-space: nowrap;
 }
 
 .breadcrumb {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
   padding: 8px 12px;
   background: rgba(37, 39, 35, 0.04);
@@ -102,6 +107,8 @@
   font-size: 13px;
   flex-shrink: 1;
   min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
 }
 
 .breadcrumb-atual {
@@ -130,8 +137,10 @@
 .acoes-topo {
   display: flex;
   align-items: center;
+  justify-content: flex-end;
   gap: 12px;
   flex-shrink: 0;
+  min-width: 0;
 }
 
 .btn-notificacoes {
@@ -140,6 +149,7 @@
   justify-content: center;
   width: 40px;
   height: 40px;
+  min-width: 40px;
   border: none;
   background: transparent;
   color: var(--muted);
@@ -168,6 +178,8 @@
   border-radius: 12px;
   cursor: pointer;
   transition: all 0.2s ease;
+  max-width: 100%;
+  overflow: hidden;
 }
 
 .usuario-pilula:hover {
