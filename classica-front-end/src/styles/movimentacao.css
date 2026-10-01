@@ -671,6 +671,128 @@
   background: #f8f7f3;
 }
 
+.detalhes-venda {
+  min-width: 0;
+  padding-top: 4px;
+}
+
+.detalhes-venda-cabecalho {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.detalhes-venda-cabecalho .titulo-pequeno {
+  margin: 0 0 4px;
+}
+
+.detalhes-venda-cabecalho h2 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.detalhes-venda-cabecalho > span {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.tabela-itens-scroll {
+  width: 100%;
+  overflow-x: auto;
+  border: 1px solid var(--line);
+  background: #fff;
+}
+
+.tabela-itens {
+  min-width: 820px;
+}
+
+.tabela-itens .tabela-header,
+.tabela-itens .item-movimentacao {
+  display: grid;
+  grid-template-columns: minmax(190px, 1fr) 70px 110px 100px 120px 95px 42px;
+  gap: 10px;
+  align-items: center;
+  padding: 10px 12px;
+}
+
+.tabela-itens .tabela-header {
+  border-bottom: 1px solid var(--line);
+  background: #f5f4ef;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.tabela-itens .lista-itens {
+  gap: 0;
+  margin: 0;
+}
+
+.tabela-itens .item-movimentacao {
+  min-width: 0;
+  padding-top: 12px;
+  padding-bottom: 12px;
+  border: 0;
+  border-bottom: 1px solid #eeece6;
+  border-radius: 0;
+  background: #fff;
+}
+
+.tabela-itens .item-movimentacao:last-child {
+  border-bottom: 0;
+}
+
+.tabela-itens .col-produto,
+.tabela-itens .col-qtd,
+.tabela-itens .col-vl,
+.tabela-itens .col-desc,
+.tabela-itens .col-sub,
+.tabela-itens .col-estoque,
+.tabela-itens .col-acoes {
+  min-width: 0;
+}
+
+.tabela-itens .col-produto {
+  display: grid;
+  gap: 4px;
+  overflow-wrap: anywhere;
+}
+
+.tabela-itens .col-produto span {
+  font-size: 13px;
+}
+
+.tabela-itens .col-produto small,
+.tabela-itens .col-estoque {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.tabela-itens .col-qtd input,
+.tabela-itens .col-vl input,
+.tabela-itens .col-desc input {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  padding: 8px;
+  border: 1px solid var(--line);
+  background: #fff;
+}
+
+.tabela-itens .col-sub strong {
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.tabela-itens .btn-remover {
+  width: 30px;
+  height: 30px;
+}
+
 .venda-resumo .resumo-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -701,7 +823,122 @@
 }
 
 .campo-pagamento-venda {
-  max-width: 420px;
+  width: 100%;
+  max-width: 760px;
+  gap: 12px;
+  padding-top: 4px;
+}
+
+.pagamentos-titulo {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.pagamentos-titulo > div {
+  display: grid;
+  gap: 4px;
+}
+
+.pagamentos-titulo label {
+  margin: 0;
+}
+
+.pagamentos-titulo small,
+.resumo-parcelas-venda {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.btn-adicionar-pagamento {
+  padding: 9px 12px;
+  border: 1px solid var(--line);
+  background: #fff;
+  color: var(--ink);
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.btn-adicionar-pagamento:hover {
+  background: #f4f1eb;
+}
+
+.lista-pagamentos-venda {
+  display: grid;
+  gap: 10px;
+}
+
+.linha-pagamento-venda {
+  display: grid;
+  grid-template-columns: minmax(180px, 1fr) minmax(130px, 180px) minmax(100px, 130px) 36px;
+  align-items: end;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  background: #fff;
+}
+
+.linha-pagamento-venda > div {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
+.linha-pagamento-venda label {
+  margin: 0;
+}
+
+.linha-pagamento-venda input,
+.linha-pagamento-venda select {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.linha-pagamento-venda input[readonly] {
+  background: #f3f2ef;
+  color: var(--ink);
+}
+
+.btn-remover-pagamento {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 38px;
+  border: 1px solid var(--line);
+  background: #fff;
+  color: #a31212;
+  cursor: pointer;
+  font-size: 22px;
+}
+
+.resumo-parcelas-venda {
+  grid-column: 1 / -1;
+  margin-top: -4px;
+}
+
+.conferencia-pagamentos {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  border-left: 3px solid #a16c35;
+  background: #f8f4ec;
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.conferencia-pagamentos-ok {
+  border-left-color: var(--green);
+  background: #e9f0e2;
+}
+
+.detalhes-venda + .venda-resumo {
+  border-top: 2px solid var(--line);
 }
 
 @media (max-width: 640px) {
@@ -718,12 +955,29 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
+  .detalhes-venda-cabecalho {
+    align-items: flex-start;
+  }
+
   .venda-resumo .resumo-item.total {
     grid-column: 1 / -1;
   }
 
   .campo-pagamento-venda {
     max-width: none;
+  }
+
+  .linha-pagamento-venda {
+    grid-template-columns: minmax(0, 1fr) minmax(100px, 140px) 36px;
+  }
+
+  .campo-pagamento-parcelas {
+    grid-column: 1 / 2;
+  }
+
+  .btn-remover-pagamento {
+    grid-column: 3;
+    grid-row: 1;
   }
 
   .venda-topbar {
