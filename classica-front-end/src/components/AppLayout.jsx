@@ -35,7 +35,7 @@ export default function AppLayout() {
   const current = location.pathname.split('/').filter(Boolean).pop();
   const labels = {
     home: 'Início', estoque: 'Estoque', movimentacao: 'Movimentação',
-    historico: 'Histórico', relatorios: 'Relatórios',
+    historico: 'Histórico', relatorios: 'Relatórios', cargos: 'Cargos e Permissões',
     ...Object.fromEntries(cadastroItems),
     ...Object.fromEntries(tiposMovimentacao),
   };
@@ -77,6 +77,7 @@ export default function AppLayout() {
   const IconHome = () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>;
 const IconPackage = () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>;
 const IconFolder = () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/><line x1="18" y1="13" x2="18" y2="13"/><line x1="6" y1="13" x2="6" y2="13"/><line x1="10" y1="13" x2="10" y2="13"/></svg>;
+const IconUsers = () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>;
 const IconRepeat = () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>;
 const IconClock = () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>;
 const IconBarChart = () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>;
@@ -94,6 +95,7 @@ const IconShoppingBag = () => <svg width="20" height="20" viewBox="0 0 24 24" fi
     { key: 'venda', icon: <IconShoppingBag />, label: 'Venda', path: '/movimentacao/venda' },
     { key: 'historico', icon: <IconClock />, label: 'Histórico', path: '/historico' },
     { key: 'relatorios', icon: <IconBarChart />, label: 'Relatórios', path: '/relatorios' },
+    { key: 'cargos', icon: <IconUsers />, label: 'Cargos e Permissões', path: '/cargos' },
     { key: 'cadastros', icon: <IconFolder />, label: 'Cadastros', path: '/cadastros', children: [
       { label: 'Cadastros', items: cadastroItems.map(([key, label]) => ({ key, label, path: `/cadastro/${key}` })) },
     ]},
