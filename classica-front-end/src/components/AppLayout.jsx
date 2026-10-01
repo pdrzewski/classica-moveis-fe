@@ -99,8 +99,6 @@ const IconClock = () => <svg width="20" height="20" viewBox="0 0 24 24" fill="no
 const IconBarChart = () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>;
 const IconTruck = () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/><path d="M5 17h14v-6.5a2.5 2.5 0 0 0-5 0V17"/></svg>;
 const IconShoppingCart = () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>;
-const IconArrowUp = () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>;
-const IconArrowDown = () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>;
 const IconShoppingBag = () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4"/><line x1="3" y1="6" x2="21" y2="6"/></svg>;
 
   const sidebarItems = [
@@ -110,9 +108,7 @@ const IconShoppingBag = () => <svg width="20" height="20" viewBox="0 0 24 24" fi
     { key: 'vendas-pendentes', icon: <IconTruck />, label: 'Vendas pendentes', path: '/vendas-pendentes' },
     { key: 'transferencia', icon: <IconRepeat />, label: 'Transferência entre lojas', path: '/movimentacao/transferencia' },
     { key: 'compra', icon: <IconShoppingCart />, label: 'Compra', path: '/movimentacao/compra' },
-    { key: 'ajuste-entrada', icon: <IconArrowUp />, label: 'Ajuste de entrada', path: '/movimentacao/ajuste-entrada' },
     { key: 'venda', icon: <IconShoppingBag />, label: 'Venda', path: '/movimentacao/venda' },
-    { key: 'ajuste-saida', icon: <IconArrowDown />, label: 'Ajuste de saída', path: '/movimentacao/ajuste-saida' },
     { key: 'historico', icon: <IconClock />, label: 'Histórico', path: '/historico' },
     { key: 'relatorios', icon: <IconBarChart />, label: 'Relatórios', path: '/relatorios' },
     { key: 'cadastros', icon: <IconFolder />, label: 'Cadastros', path: '/cadastros', children: [
