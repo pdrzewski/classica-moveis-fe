@@ -15,6 +15,32 @@ const idDaLoja = (loja) => valorDo(loja, 'id', 'estabelecimentoId', 'estabelecim
 const idDoColaborador = (colaborador) => valorDo(colaborador, 'id', 'colaboradorId', 'colaborador_id');
 const nomeDoColaborador = (colaborador) => colaborador?.nome || colaborador?.titulo || colaborador?.login || `Funcionário ${idDoColaborador(colaborador)}`;
 const nomeDaLoja = (loja) => loja?.nome || loja?.titulo || loja?.descricao || `Loja ${idDaLoja(loja)}`;
+const formasPagamento = [
+  ['PIX', 'PIX'],
+  ['DINHEIRO', 'Dinheiro'],
+  ['CARTAO_CREDITO', 'Cartão de crédito'],
+  ['CARTAO_DEBITO', 'Cartão de débito'],
+  ['BOLETO', 'Boleto'],
+];
+const formatarMoeda = (valor) => Number(valor || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const resumirParcelas = (valores) => {
+  const grupos = valores.reduce((acumulado, valor) => {
+    const valorCentavos = Math.round(valor * 100);
+    const grupo = acumulado.find((item) => item.valorCentavos === valorCentavos);
+    if (grupo) grupo.quantidade += 1;
+    else acumulado.push({ valorCentavos, quantidade: 1 });
+    return acumulado;
+  }, []);
+  return grupos.map((grupo) => (
+    `${grupo.quantidade}x R$ ${formatarMoeda(grupo.valorCentavos / 100)}`
+  )).join(' + ');
+};
+const novoPagamento = () => ({ id: `${Date.now()}-${Math.random()}`, formaPagamento: 'PIX', valor: 0, parcelas: 1 });
+const paraNumero = (valor) => {
+  const numero = Number(String(valor ?? '').replace(',', '.'));
+  return Number.isFinite(numero) ? numero : 0;
+};
+const selecionarConteudoInput = (event) => event.currentTarget.select();
 const identificarMatriz = (lojas) => lojas.find((loja) => (
   loja?.matriz === true
   || loja?.isMatriz === true
@@ -94,7 +120,7 @@ export default function VendaForm() {
   const [itens, setItens] = useState([]);
   const [produtoBusca, setProdutoBusca] = useState('');
   const [observacao, setObservacao] = useState('');
-  const [formaPagamento, setFormaPagamento] = useState('PIX');
+  const [pagamentos, setPagamentos] = useState([{ id: 'pagamento-inicial', formaPagamento: 'PIX', valor: 0, parcelas: 1 }]);
   const [loading, setLoading] = useState(false);
   const [notice, setNotice] = useState('');
   const [estoqueOrigem, setEstoqueOrigem] = useState({});
@@ -489,49 +515,30 @@ export default function VendaForm() {
   };
 
   const alterarQuantidade = (produtoId, quantidade) => {
-    const valor = Number(quantidade || 0);
-    const produto = produtos.find((p) => Number(p.id) === Number(produtoId));
-
-    if (valor <= 0) {
-      setNotice('A quantidade deve ser maior que zero.');
-      return;
-    }
-
-    setNotice('');
-    const unitario = Number(produto?.precoVenda || produto?.preco_venda || 0);
-    const subtotal = (valor * unitario) - Number(itens.find((item) => item.produtoId === produtoId)?.desconto || 0);
+    const itemAtual = itens.find((item) => item.produtoId === produtoId);
+    const valor = paraNumero(quantidade);
+    const subtotal = (valor * paraNumero(itemAtual?.valorUnitario)) - paraNumero(itemAtual?.desconto);
+    setNotice(valor <= 0 ? 'A quantidade deve ser maior que zero.' : '');
 
     setItens((prev) =>
       prev.map((item) => {
         if (item.produtoId !== produtoId) return item;
         return {
           ...item,
-          quantidade: valor,
-          valorUnitario: unitario,
+          quantidade,
           subtotal,
         };
       })
     );
   };
 
-  const alterarValorUnitario = (produtoId, valorUnitario) => {
-    const valor = Number(valorUnitario || 0);
-    setItens((prev) =>
-      prev.map((item) => {
-        if (item.produtoId !== produtoId) return item;
-        const subtotal = valor * Number(item.quantidade || 0) - Number(item.desconto || 0);
-        return { ...item, valorUnitario: valor, subtotal };
-      })
-    );
-  };
-
   const alterarDesconto = (produtoId, desconto) => {
-    const valor = Number(desconto || 0);
+    const valor = paraNumero(desconto);
     setItens((prev) =>
       prev.map((item) => {
         if (item.produtoId !== produtoId) return item;
-        const subtotal = (Number(item.valorUnitario || 0) * Number(item.quantidade || 0)) - valor;
-        return { ...item, desconto: valor, subtotal };
+        const subtotal = (paraNumero(item.valorUnitario) * paraNumero(item.quantidade)) - valor;
+        return { ...item, desconto, subtotal };
       })
     );
   };
@@ -546,7 +553,7 @@ export default function VendaForm() {
     setObservacao('');
     setClienteSelecionado(null);
     setClienteBusca('');
-    setFormaPagamento('PIX');
+    setPagamentos([{ id: 'pagamento-inicial', formaPagamento: 'PIX', valor: 0, parcelas: 1 }]);
     setNotice('');
     setDistribuicaoVenda(null);
     setQuantidadesOutrasLojas({});
@@ -570,8 +577,16 @@ export default function VendaForm() {
       setNotice('Selecione o funcionário responsável pela venda.');
       return false;
     }
-    if (!formaPagamento) {
-      setNotice('Selecione a forma de pagamento.');
+    const valorPagamentos = pagamentos.reduce((total, pagamento) => (
+      total + Math.round(obterValorPagamento(pagamento) * 100)
+    ), 0);
+    const totalCentavos = Math.round(valorTotal * 100);
+    if (pagamentos.length === 0 || pagamentos.some((pagamento) => obterValorPagamento(pagamento) <= 0)) {
+      setNotice('Informe um valor maior que zero para cada forma de pagamento.');
+      return false;
+    }
+    if (valorPagamentos !== totalCentavos) {
+      setNotice('A soma das formas de pagamento deve ser igual ao total da venda.');
       return false;
     }
     if (itens.length === 0) {
@@ -579,7 +594,7 @@ export default function VendaForm() {
       return false;
     }
     for (const item of itens) {
-      if (Number(item.quantidade) <= 0) {
+      if (paraNumero(item.quantidade) <= 0) {
         const produto = produtos.find((p) => Number(p.id) === Number(item.produtoId));
         setNotice(`Quantidade inválida para "${produto?.nome || 'produto'}".`);
         return false;
@@ -588,29 +603,118 @@ export default function VendaForm() {
     return true;
   };
 
+  const adicionarPagamento = () => {
+    setPagamentos((atuais) => {
+      const lista = atuais.map((pagamento) => ({
+        ...pagamento,
+        valor: atuais.length === 1 ? valorTotal : pagamento.valor,
+      }));
+      return [...lista, novoPagamento()];
+    });
+  };
+
+  const alterarPagamento = (id, campo, valor) => {
+    setPagamentos((atuais) => {
+      let atualizados = atuais.map((pagamento) => {
+        if (pagamento.id !== id) return pagamento;
+        if (campo === 'formaPagamento') {
+          return { ...pagamento, formaPagamento: valor, parcelas: valor === 'CARTAO_CREDITO' ? pagamento.parcelas || 1 : 1 };
+        }
+        return { ...pagamento, [campo]: valor };
+      });
+
+      if (campo === 'valor' && atualizados.length > 1) {
+        const indiceEditado = atualizados.findIndex((pagamento) => pagamento.id === id);
+        let indiceBalanceado = -1;
+        for (let indice = atualizados.length - 1; indice >= 0; indice -= 1) {
+          if (atualizados[indice].id !== id) {
+            indiceBalanceado = indice;
+            break;
+          }
+        }
+        if (indiceEditado >= 0 && indiceBalanceado >= 0) {
+          const centavosEditados = Math.round(paraNumero(valor) * 100);
+          const centavosFixos = atualizados.reduce((total, pagamento, indice) => (
+            indice !== indiceEditado && indice !== indiceBalanceado
+              ? total + Math.round(paraNumero(pagamento.valor) * 100)
+              : total
+          ), 0);
+          const restanteCentavos = Math.max(0, Math.round(valorTotal * 100) - centavosEditados - centavosFixos);
+          atualizados = atualizados.map((pagamento, indice) => (
+            indice === indiceBalanceado
+              ? { ...pagamento, valor: (restanteCentavos / 100).toFixed(2) }
+              : pagamento
+          ));
+        }
+      }
+
+      return atualizados;
+    });
+  };
+
+  const removerPagamento = (id) => {
+    setPagamentos((atuais) => atuais.filter((pagamento) => pagamento.id !== id));
+  };
+
+  const obterValorPagamento = (pagamento) => (
+    pagamentos.length === 1 ? valorTotal : paraNumero(pagamento.valor)
+  );
+
+  const dividirPagamentosPorOrigem = (grupos) => {
+    const totaisGrupos = grupos.map(({ itens: itensGrupo }) => (
+      itensGrupo.reduce((total, item) => total + Number(item.subtotal || 0), 0)
+    ));
+    const totalGrupos = totaisGrupos.reduce((total, valor) => total + valor, 0);
+    const alocacoesPorGrupo = grupos.map(() => []);
+
+    pagamentos.forEach((pagamento) => {
+      const valorOriginal = obterValorPagamento(pagamento);
+      const quantidadeParcelas = Math.max(1, Number(pagamento.parcelas || 1));
+      let alocadoCentavos = 0;
+      totaisGrupos.forEach((totalGrupo, indice) => {
+        const valorCentavos = indice === totaisGrupos.length - 1
+          ? Math.round(valorOriginal * 100) - alocadoCentavos
+          : Math.round(valorOriginal * 100 * (totalGrupo / totalGrupos));
+        alocadoCentavos += valorCentavos;
+        if (valorCentavos <= 0) return;
+        alocacoesPorGrupo[indice].push({
+          formaPagamento: pagamento.formaPagamento,
+          valor: valorCentavos / 100,
+          quantidadeParcelas,
+        });
+      });
+    });
+
+    return grupos.map((grupo, indice) => ({ ...grupo, pagamentos: alocacoesPorGrupo[indice] }));
+  };
+
   const salvarVendasPorOrigem = async (grupos) => {
     setLoading(true);
     let salvos = 0;
     try {
-      for (const { loja, itens: itensDaLoja } of grupos) {
+      const gruposComPagamentos = dividirPagamentosPorOrigem(grupos);
+      for (const { loja, itens: itensDaLoja, pagamentos: pagamentosDaOrigem } of gruposComPagamentos) {
         const payload = {
           tipoMovimentacao: 'VENDA',
-          formaPagamento,
+          pagamentos: pagamentosDaOrigem,
           observacao: observacao || 'Venda de produto',
           estabelecimentoOrigemId: Number(idDaLoja(loja)),
           estabelecimentoDestinoId: null,
           clienteId: Number(clienteSelecionado.id || clienteSelecionado.clienteId || clienteSelecionado.cliente_id),
           fornecedorId: null,
           colaboradorId: Number(colaboradorSelecionadoId),
-          colaboradorNome: nomeDoColaborador(colaboradorSelecionado),
           itens: itensDaLoja.map((item) => ({
             produtoId: Number(item.produtoId),
-            quantidade: Number(item.quantidade || 0),
-            valorUnitario: Number(item.valorUnitario || 0),
-            desconto: Number(item.desconto || 0),
+            quantidade: paraNumero(item.quantidade),
+            valorUnitario: paraNumero(item.valorUnitario),
+            desconto: paraNumero(item.desconto),
+            subtotal: Number((
+              (paraNumero(item.valorUnitario) * paraNumero(item.quantidade))
+              - paraNumero(item.desconto)
+            ).toFixed(2)),
           })),
         };
-        await api.post('/movimentacoes', payload).catch(() => api.post('/api/movimentacoes', payload));
+        await api.post('/movimentacoes', payload);
         salvos += 1;
       }
       await buscarEstoqueLojas(lojas);
@@ -618,8 +722,14 @@ export default function VendaForm() {
       setItens([]);
       setObservacao('');
       setProdutoBusca('');
+      setClienteSelecionado(null);
+      setClienteBusca('');
+      setClientesSugeridos([]);
+      setPagamentos([{ id: 'pagamento-inicial', formaPagamento: 'PIX', valor: 0, parcelas: 1 }]);
+      setColaboradorSelecionadoId(String(colaboradorLogadoId || ''));
       setDistribuicaoVenda(null);
       setQuantidadesOutrasLojas({});
+      setErroDistribuicao('');
     } catch (err) {
       if (salvos > 0) await buscarEstoqueLojas(lojas);
       setNotice(salvos > 0
@@ -689,7 +799,7 @@ export default function VendaForm() {
       grupos.get(lojaId).itens.push({
         ...item,
         quantidade,
-        desconto: Number((Number(item.desconto || 0) * proporcao).toFixed(2)),
+        desconto: Number((paraNumero(item.desconto) * proporcao).toFixed(2)),
       });
     };
 
@@ -713,12 +823,12 @@ export default function VendaForm() {
 
   const valorTotal = useMemo(() => {
     return itens.reduce((total, item) => {
-      return total + (Number(item.valorUnitario || 0) * Number(item.quantidade || 0)) - Number(item.desconto || 0);
+      return total + (paraNumero(item.valorUnitario) * paraNumero(item.quantidade)) - paraNumero(item.desconto);
     }, 0);
   }, [itens]);
 
   const quantidadeTotal = useMemo(() => {
-    return itens.reduce((total, item) => total + Number(item.quantidade || 0), 0);
+    return itens.reduce((total, item) => total + paraNumero(item.quantidade), 0);
   }, [itens]);
 
   const lojaOrigemNome = lojaMatriz ? nomeDaLoja(lojaMatriz) : 'Matriz não identificada';
@@ -733,7 +843,7 @@ export default function VendaForm() {
             {carregandoEstoque && <span className="loading-indicator">Carregando estoque...</span>}
           </div>
           <button type="button" className="btn-limpar" onClick={limparFormulario}>
-            Nova venda
+            Limpar campos
           </button>
         </div>
 
@@ -868,79 +978,6 @@ export default function VendaForm() {
             </div>
           </div>
 
-          {itens.length === 0 ? (
-            <div className="lista-vazia">Nenhum produto adicionado. Use a busca acima para adicionar itens.</div>
-          ) : (
-            <div className="tabela-itens">
-              <div className="tabela-header">
-                <div className="col-produto">Produto</div>
-                <div className="col-qtd">Qtd</div>
-                <div className="col-vl">Vl. Unit.</div>
-                <div className="col-desc">Desc.</div>
-                <div className="col-sub">Subtotal</div>
-                <div className="col-estoque">Estoque</div>
-                <div className="col-acoes"></div>
-              </div>
-              <div className="lista-itens">
-                {itens.map((item) => {
-                  const saldo = obterSaldoDisponivel(Number(item.produtoId));
-                  const produto = produtos.find((p) => Number(p.id) === Number(item.produtoId));
-                  return (
-                    <div key={item.produtoId} className="item-movimentacao">
-                      <div className="col-produto">
-                        <span>{item.produtoNome}</span>
-                        <small className="texto-secundario">
-                          Estoque na matriz: {saldo} {produto?.unidadeMedida || produto?.unidade_medida || 'UN'}
-                        </small>
-                      </div>
-                      <div className="col-qtd">
-                        <input
-                          type="number"
-                          min="1"
-                          value={String(item.quantidade)}
-                          onChange={(event) => alterarQuantidade(item.produtoId, event.target.value)}
-                          title="Se o saldo da matriz for insuficiente, escolha outras lojas ao finalizar."
-                        />
-                      </div>
-                      <div className="col-vl">
-                        <input
-                          type="number"
-                          min="0"
-                          step="0.01"
-                          value={String(item.valorUnitario)}
-                          onChange={(event) => alterarValorUnitario(item.produtoId, event.target.value)}
-                          placeholder="0,00"
-                        />
-                      </div>
-                      <div className="col-desc">
-                        <input
-                          type="number"
-                          min="0"
-                          step="0.01"
-                          value={String(item.desconto)}
-                          onChange={(event) => alterarDesconto(item.produtoId, event.target.value)}
-                          placeholder="0,00"
-                        />
-                      </div>
-                      <div className="col-sub">
-                        <strong>R$ {Number(item.subtotal || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong>
-                      </div>
-                      <div className="col-estoque">
-                        <span className={saldo > 0 ? '' : 'sem-estoque'}>
-                          {saldo > 0 ? `${saldo} disp.` : 'Sem estoque'}
-                        </span>
-                      </div>
-                      <div className="col-acoes">
-                        <button type="button" className="btn-remover" onClick={() => removerProduto(item.produtoId)} title="Remover">
-                          ×
-                        </button>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
         </div>
 
         <div className="campo campo-observacao">
@@ -952,6 +989,90 @@ export default function VendaForm() {
             rows={2}
           />
         </div>
+
+        <section className="detalhes-venda" aria-labelledby="titulo-detalhes-venda">
+          <div className="detalhes-venda-cabecalho">
+            <div>
+              <p className="titulo-pequeno">Conferência</p>
+              <h2 id="titulo-detalhes-venda">Detalhes da venda</h2>
+            </div>
+            <span>{itens.length} {itens.length === 1 ? 'item' : 'itens'}</span>
+          </div>
+          {itens.length === 0 ? (
+            <div className="lista-vazia">Os produtos adicionados aparecerão aqui para conferência.</div>
+          ) : (
+            <div className="tabela-itens-scroll">
+              <div className="tabela-itens">
+                <div className="tabela-header">
+                  <div className="col-produto">Produto</div>
+                  <div className="col-qtd">Qtd</div>
+                  <div className="col-vl">Vl. Unit.</div>
+                  <div className="col-desc">Desconto</div>
+                  <div className="col-sub">Subtotal</div>
+                  <div className="col-estoque">Estoque</div>
+                  <div className="col-acoes"></div>
+                </div>
+                <div className="lista-itens">
+                  {itens.map((item) => {
+                    const saldo = obterSaldoDisponivel(Number(item.produtoId));
+                    const produto = produtos.find((p) => Number(p.id) === Number(item.produtoId));
+                    return (
+                      <div key={item.produtoId} className="item-movimentacao">
+                        <div className="col-produto">
+                          <span>{item.produtoNome}</span>
+                          <small className="texto-secundario">
+                            Estoque na matriz: {saldo} {produto?.unidadeMedida || produto?.unidade_medida || 'UN'}
+                          </small>
+                        </div>
+                        <div className="col-qtd">
+                          <input
+                            type="text"
+                            inputMode="numeric"
+                            value={String(item.quantidade)}
+                            onChange={(event) => alterarQuantidade(item.produtoId, event.target.value)}
+                            onFocus={selecionarConteudoInput}
+                            title="Se o saldo da matriz for insuficiente, escolha outras lojas ao finalizar."
+                          />
+                        </div>
+                        <div className="col-vl">
+                          <input
+                            type="number"
+                            value={String(item.valorUnitario)}
+                            readOnly
+                            aria-label={`Valor unitário de ${item.produtoNome}`}
+                          />
+                        </div>
+                        <div className="col-desc">
+                          <input
+                            type="text"
+                            inputMode="decimal"
+                            value={String(item.desconto)}
+                            onChange={(event) => alterarDesconto(item.produtoId, event.target.value)}
+                            onFocus={selecionarConteudoInput}
+                            placeholder="0,00"
+                          />
+                        </div>
+                        <div className="col-sub">
+                          <strong>R$ {Number(item.subtotal || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong>
+                        </div>
+                        <div className="col-estoque">
+                          <span className={saldo > 0 ? '' : 'sem-estoque'}>
+                            {saldo > 0 ? `${saldo} disp.` : 'Sem estoque'}
+                          </span>
+                        </div>
+                        <div className="col-acoes">
+                          <button type="button" className="btn-remover" onClick={() => removerProduto(item.produtoId)} title="Remover">
+                            ×
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          )}
+        </section>
 
         <div className="venda-resumo">
           <div className="resumo-grid">
@@ -971,19 +1092,85 @@ export default function VendaForm() {
         </div>
 
         <div className="campo campo-pagamento-venda">
-          <label htmlFor="forma-pagamento-venda">Forma de pagamento *</label>
-          <select
-            id="forma-pagamento-venda"
-            value={formaPagamento}
-            onChange={(event) => setFormaPagamento(event.target.value)}
-            required
-          >
-            <option value="PIX">PIX</option>
-            <option value="DINHEIRO">Dinheiro</option>
-            <option value="CARTAO">Cartão</option>
-            <option value="BOLETO">Boleto</option>
-            <option value="CREDITO">Crédito</option>
-          </select>
+          <div className="pagamentos-titulo">
+            <div>
+              <label>Formas de pagamento *</label>
+              <small>Divida o total entre as formas escolhidas pelo cliente.</small>
+            </div>
+            <button type="button" className="btn-adicionar-pagamento" onClick={adicionarPagamento}>
+              + Adicionar forma
+            </button>
+          </div>
+          <div className="lista-pagamentos-venda">
+            {pagamentos.map((pagamento, indice) => {
+              const valor = obterValorPagamento(pagamento);
+              const parcelas = Math.max(1, Number(pagamento.parcelas || 1));
+              const valorEmCentavos = Math.round(valor * 100);
+              const parcelaBaseCentavos = Math.floor(valorEmCentavos / parcelas);
+              const restoCentavos = valorEmCentavos - (parcelaBaseCentavos * parcelas);
+              const valoresParcelas = Array.from({ length: parcelas }, (_, parcelaIndice) => (
+                (parcelaBaseCentavos + (parcelaIndice < restoCentavos ? 1 : 0)) / 100
+              ));
+              const aceitaParcelas = pagamento.formaPagamento === 'CARTAO_CREDITO';
+              const resumoParcelas = parcelas > 1 ? resumirParcelas(valoresParcelas) : '';
+              return (
+                <div className="linha-pagamento-venda" key={pagamento.id}>
+                  <div className="campo-pagamento-metodo">
+                    <label htmlFor={`forma-pagamento-${pagamento.id}`}>Forma {indice + 1}</label>
+                    <select
+                      id={`forma-pagamento-${pagamento.id}`}
+                      value={pagamento.formaPagamento}
+                      onChange={(event) => alterarPagamento(pagamento.id, 'formaPagamento', event.target.value)}
+                    >
+                      {formasPagamento.map(([valorForma, rotulo]) => <option key={valorForma} value={valorForma}>{rotulo}</option>)}
+                    </select>
+                  </div>
+                  <div className="campo-pagamento-valor">
+                    <label htmlFor={`valor-pagamento-${pagamento.id}`}>Valor</label>
+                    <input
+                      id={`valor-pagamento-${pagamento.id}`}
+                      type="text"
+                      inputMode="decimal"
+                      value={pagamentos.length === 1 ? valor : pagamento.valor}
+                      onChange={(event) => alterarPagamento(pagamento.id, 'valor', event.target.value)}
+                      onFocus={selecionarConteudoInput}
+                      readOnly={pagamentos.length === 1}
+                    />
+                  </div>
+                  {aceitaParcelas && (
+                    <div className="campo-pagamento-parcelas">
+                      <label htmlFor={`parcelas-pagamento-${pagamento.id}`}>Parcelas</label>
+                      <select
+                        id={`parcelas-pagamento-${pagamento.id}`}
+                        value={parcelas}
+                        onChange={(event) => alterarPagamento(pagamento.id, 'parcelas', Number(event.target.value))}
+                      >
+                        {Array.from({ length: 12 }, (_, posicao) => posicao + 1).map((quantidade) => (
+                          <option key={quantidade} value={quantidade}>{quantidade}x</option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+                  {pagamentos.length > 1 && (
+                    <button
+                      type="button"
+                      className="btn-remover-pagamento"
+                      onClick={() => removerPagamento(pagamento.id)}
+                      aria-label={`Remover forma de pagamento ${indice + 1}`}
+                      title="Remover forma de pagamento"
+                    >
+                      ×
+                    </button>
+                  )}
+                  {resumoParcelas && <small className="resumo-parcelas-venda">{resumoParcelas}</small>}
+                </div>
+              );
+            })}
+          </div>
+          <div className={`conferencia-pagamentos ${Math.round(pagamentos.reduce((soma, pagamento) => soma + obterValorPagamento(pagamento), 0) * 100) === Math.round(valorTotal * 100) ? 'conferencia-pagamentos-ok' : ''}`}>
+            <span>Distribuído: R$ {formatarMoeda(pagamentos.reduce((soma, pagamento) => soma + obterValorPagamento(pagamento), 0))}</span>
+            <span>Total da venda: R$ {formatarMoeda(valorTotal)}</span>
+          </div>
         </div>
 
         {notice && <div className="aviso">{notice}</div>}
@@ -1016,13 +1203,12 @@ export default function VendaForm() {
                       <label key={idDaLoja(loja)} className="origem-loja-venda">
                         <span>{nomeDaLoja(loja)} <small>Disponível: {disponivel}</small></span>
                         <input
-                          type="number"
-                          min="0"
-                          max={disponivel}
-                          step="1"
+                          type="text"
+                          inputMode="numeric"
                           value={alocacoes[idDaLoja(loja)] || 0}
                           disabled={disponivel <= 0}
                           onChange={(event) => alterarQuantidadeOrigem(item.produtoId, idDaLoja(loja), event.target.value, disponivel, item.faltante)}
+                          onFocus={selecionarConteudoInput}
                           aria-label={`Quantidade de ${item.produtoNome} retirada de ${nomeDaLoja(loja)}`}
                         />
                       </label>

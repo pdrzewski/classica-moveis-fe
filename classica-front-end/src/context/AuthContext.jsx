@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState } from 'react';
 import api from '../services/Api';
 
 const AuthContext = createContext(null);
@@ -27,39 +27,8 @@ const limparUsuarioStorage = () => {
 };
 
 export function AuthProvider({ children }) {
-  const [usuario, setUsuario] = useState(null);
-  const [carregando, setCarregando] = useState(true);
-
-  useEffect(() => {
-    const restaurarSessao = async () => {
-      try {
-        const resp = await api.get('/me').catch(() => api.get('/api/me'));
-        if (resp?.data) {
-          const dados = resp.data;
-          const colaborador = dados.colaborador || {};
-          const usuarioCompleto = {
-            id: dados.usuarioId || dados.id,
-            login: dados.login,
-            permissoes: dados.permissoes || [],
-            colaborador: colaborador,
-            colaboradorId: colaborador.id || dados.colaboradorId || dados.usuarioId || dados.id,
-            nome: colaborador.nome || dados.nome,
-          };
-          setUsuario(usuarioCompleto);
-          salvarUsuario(usuarioCompleto);
-        } else {
-          const storage = carregarUsuarioStorage();
-          if (storage) setUsuario(storage);
-        }
-      } catch {
-        const storage = carregarUsuarioStorage();
-        if (storage) setUsuario(storage);
-      } finally {
-        setCarregando(false);
-      }
-    };
-    restaurarSessao();
-  }, []);
+  const [usuario, setUsuario] = useState(carregarUsuarioStorage);
+  const [carregando, setCarregando] = useState(false);
 
   const login = async (loginData) => {
     setCarregando(true);
@@ -87,7 +56,7 @@ export function AuthProvider({ children }) {
 
   const logout = async () => {
     try {
-      await api.post('/logout').catch(() => api.post('/api/logout'));
+      await api.post('/login/sair');
     } catch {}
     setUsuario(null);
     limparUsuarioStorage();

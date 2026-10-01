@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import logo from '../assets/Clássica(1).png';
 import api from '../services/Api';
-import { criarMovimentacaoItems, movimentacaoConfigs, movimentacaoItems } from '../pages/movimentacaoConfig';
+import { movimentacaoItems } from '../pages/movimentacaoConfig';
 import { useAuth } from '../context/AuthContext';
 
 const cadastroItems = [
@@ -26,7 +26,7 @@ export default function AppLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [cadastroOpen, setCadastroOpen] = useState(true);
   const [movimentacaoOpen, setMovimentacaoOpen] = useState(true);
-  const [tiposMovimentacao, setTiposMovimentacao] = useState(movimentacaoItems);
+  const tiposMovimentacao = movimentacaoItems;
   const [notificacoes, setNotificacoes] = useState([]);
   const [notificacoesAbertas, setNotificacoesAbertas] = useState(false);
   const [carregandoNotificacoes, setCarregandoNotificacoes] = useState(false);
@@ -41,28 +41,11 @@ export default function AppLayout() {
   };
   const title = labels[current] || 'Início';
 
-  useEffect(() => {
-    const carregarTiposMovimentacao = async () => {
-      try {
-        const resposta = await api.get('/movimentacoes').catch(() => api.get('/api/movimentacoes'));
-        const dados = resposta?.data;
-        const registros = Array.isArray(dados) ? dados : dados?.content || dados?.dados || [];
-        const tiposDoBanco = criarMovimentacaoItems(registros);
-
-        if (tiposDoBanco.length) setTiposMovimentacao(tiposDoBanco);
-      } catch {
-        // Mantém os tipos conhecidos se a API não estiver disponível.
-      }
-    };
-
-    carregarTiposMovimentacao();
-  }, []);
-
   const carregarNotificacoes = async () => {
     if (carregandoNotificacoes) return;
     setCarregandoNotificacoes(true);
     try {
-      const resp = await api.get('/produtos/estoque-baixo').catch(() => api.get('/api/produtos/estoque-baixo'));
+      const resp = await api.get('/produtos/estoque-baixo');
       const dados = Array.isArray(resp?.data) ? resp.data : resp?.data?.content || resp?.data?.dados || resp?.data || [];
       setNotificacoes(dados.slice(0, 10));
     } catch {
