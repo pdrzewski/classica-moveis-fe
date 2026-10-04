@@ -11,12 +11,19 @@ const listarDados = (resposta) => {
 };
 
 const buscar = async (rota) => {
-  try {
-    return await api.get(rota);
-  } catch {
-    return api.get(`/api${rota}`);
-  }
+  return api.get(rota);
 };
+
+const normalizarProdutosEstoque = (resposta) => listarDados(resposta).map((produto) => ({
+  ...produto,
+  id: produto.produtoId || produto.id,
+  saldoAtual: produto.saldoDisponivel ?? produto.quantidade ?? produto.saldo ?? 0,
+}));
+const normalizarBusca = (valor) => String(valor || '')
+  .normalize('NFD')
+  .replace(/[\u0300-\u036f]/g, '')
+  .trim()
+  .toLowerCase();
 
 export default function AjusteEstoque() {
   const { usuario } = useAuth();
@@ -28,6 +35,7 @@ export default function AjusteEstoque() {
   const [lojaSelecionada, setLojaSelecionada] = useState('');
   const [observacao, setObservacao] = useState('');
   const [buscaProduto, setBuscaProduto] = useState('');
+  const [produtoSelecionadoId, setProdutoSelecionadoId] = useState('');
   const [quantidade, setQuantidade] = useState(1);
   const [itens, setItens] = useState([]);
   const [carregando, setCarregando] = useState(false);
@@ -56,13 +64,29 @@ export default function AjusteEstoque() {
     const carregarProdutos = async () => {
       setCarregando(true);
       try {
-        const resposta = await buscar(`/estoque/${lojaSelecionada}/produtos`);
-        const dados = listarDados(resposta).map((p) => ({
-          ...p,
-          id: p.produtoId || p.id,
-          saldoAtual: p.saldoDisponivel || p.quantidade || p.saldo || 0,
-        }));
-        setProdutos(dados);
+        const [resultadoCatalogo, resultadoEstoque] = await Promise.allSettled([
+          buscar('/produtos'),
+          buscar(`/estoque/${lojaSelecionada}/produtos`),
+        ]);
+        if (resultadoCatalogo.status === 'rejected' && resultadoEstoque.status === 'rejected') {
+          setProdutos([]);
+          return;
+        }
+
+        const catalogo = resultadoCatalogo.status === 'fulfilled'
+          ? listarDados(resultadoCatalogo.value)
+          : normalizarProdutosEstoque(resultadoEstoque.value);
+        const saldosPorProduto = new Map((resultadoEstoque.status === 'fulfilled'
+          ? normalizarProdutosEstoque(resultadoEstoque.value)
+          : []
+        ).map((produto) => (
+          [Number(produto.id), Number(produto.saldoAtual || 0)]
+        )));
+        setProdutos(catalogo.map((produto) => ({
+          ...produto,
+          id: produto.id || produto.produtoId,
+          saldoAtual: saldosPorProduto.get(Number(produto.id || produto.produtoId)) || 0,
+        })));
       } catch {
         setProdutos([]);
       } finally {
@@ -77,23 +101,26 @@ export default function AjusteEstoque() {
       setProdutosSugeridos([]);
       return;
     }
-    const texto = buscaProduto.trim().toLowerCase();
+    const texto = normalizarBusca(buscaProduto);
     const sugestoes = produtos.filter((p) => {
-      const nome = String(p?.nome || '').toLowerCase();
-      const sku = String(p?.sku || '').toLowerCase();
-      return nome.includes(texto) || sku.includes(texto);
+      const camposBusca = [p?.nome, p?.sku, p?.codigoBarras, p?.codigo]
+        .map(normalizarBusca);
+      return camposBusca.some((campo) => campo.includes(texto));
     }).slice(0, 10);
     setProdutosSugeridos(sugestoes);
   }, [buscaProduto, produtos, lojaSelecionada]);
 
   const selecionarProduto = (produto) => {
     setBuscaProduto(produto.nome);
+    setProdutoSelecionadoId(String(produto.id));
     setProdutosSugeridos([]);
     setQuantidade(1);
   };
 
   const adicionarItem = (tipo) => {
-    const produto = produtos.find((p) => p.nome === buscaProduto.trim());
+    const produto = produtos.find((p) => String(p.id) === produtoSelecionadoId)
+      || produtos.find((p) => [p.nome, p.sku, p.codigoBarras, p.codigo]
+        .some((campo) => normalizarBusca(campo) === normalizarBusca(buscaProduto)));
     if (!produto) {
       setNotice('Selecione um produto válido da lista.');
       return;
@@ -131,6 +158,7 @@ export default function AjusteEstoque() {
     });
 
     setBuscaProduto('');
+    setProdutoSelecionadoId('');
     setQuantidade(1);
     setNotice('');
   };
@@ -146,6 +174,7 @@ export default function AjusteEstoque() {
     setLojaSelecionada('');
     setObservacao('');
     setBuscaProduto('');
+    setProdutoSelecionadoId('');
     setQuantidade(1);
     setItens([]);
     setNotice('');
@@ -154,13 +183,15 @@ export default function AjusteEstoque() {
 
   const criarPayload = (tipoMovimentacao, itensTipo) => ({
     tipoMovimentacao,
-    observacao,
+    observacao: observacao.trim(),
     estabelecimentoOrigemId: Number(lojaSelecionada),
     colaboradorId: Number(colaboradorId),
-    status: 'CONCLUIDO',
+    estabelecimentoDestinoId: null,
+    clienteId: null,
+    fornecedorId: null,
     itens: itensTipo.map((item) => ({
-      produtoId: item.produtoId,
-      quantidade: item.quantidade,
+      produtoId: Number(item.produtoId),
+      quantidade: Number(item.quantidade),
       valorUnitario: 0,
       desconto: 0,
     })),
@@ -189,29 +220,54 @@ export default function AjusteEstoque() {
     }
 
     setSalvando(true);
+    let requisicoesEnviadas = 0;
+    const totalRequisicoes = Number(itensEntrada.length > 0) + Number(itensSaida.length > 0);
 
     try {
-      const promises = [];
-
       if (itensEntrada.length > 0) {
         const payloadEntrada = criarPayload('AJUSTE_ENTRADA', itensEntrada);
-        promises.push(api.post('/movimentacoes', payloadEntrada).catch(() => api.post('/api/movimentacoes', payloadEntrada)));
+        await api.post('/movimentacoes', payloadEntrada);
+        requisicoesEnviadas += 1;
       }
 
       if (itensSaida.length > 0) {
         const payloadSaida = criarPayload('AJUSTE_SAIDA', itensSaida);
-        promises.push(api.post('/movimentacoes', payloadSaida).catch(() => api.post('/api/movimentacoes', payloadSaida)));
+        await api.post('/movimentacoes', payloadSaida);
+        requisicoesEnviadas += 1;
       }
-
-      await Promise.all(promises);
-      setSucesso(true);
-      setNotice('Ajuste de estoque realizado com sucesso.');
-      limparFormulario();
     } catch (err) {
-      setNotice(err.response?.data?.message || err.message || 'Erro ao registrar ajuste de estoque.');
-    } finally {
+      if (requisicoesEnviadas > 0) {
+        setNotice(`Ajuste parcialmente registrado (${requisicoesEnviadas} de ${totalRequisicoes} operações). Revise o estoque antes de tentar novamente.`);
+        try {
+          const respostaEstoque = await buscar(`/estoque/${lojaSelecionada}/produtos`);
+          setProdutos(normalizarProdutosEstoque(respostaEstoque));
+        } catch {
+          // Mantém a lista atual se a atualização do saldo falhar.
+        }
+      } else {
+        setNotice(err.response?.data?.message || err.message || 'Erro ao registrar ajuste de estoque.');
+      }
       setSalvando(false);
+      return;
     }
+
+    let erroAtualizacaoSaldo = false;
+    try {
+      const respostaEstoque = await buscar(`/estoque/${lojaSelecionada}/produtos`);
+      setProdutos(normalizarProdutosEstoque(respostaEstoque));
+    } catch {
+      erroAtualizacaoSaldo = true;
+    }
+    setSucesso(true);
+    setNotice(erroAtualizacaoSaldo
+      ? 'Ajuste realizado. Não foi possível atualizar o saldo exibido; recarregue a loja para conferir.'
+      : 'Ajuste de estoque realizado com sucesso.');
+    setObservacao('');
+    setBuscaProduto('');
+    setProdutoSelecionadoId('');
+    setQuantidade(1);
+    setItens([]);
+    setSalvando(false);
   };
 
   return (
@@ -228,7 +284,16 @@ export default function AjusteEstoque() {
         <form onSubmit={handleSubmit} className="form-ajuste-estoque">
           <div className="campo">
             <label>Loja <span className="obrigatorio">*</span></label>
-            <select value={lojaSelecionada} onChange={(e) => setLojaSelecionada(e.target.value)}>
+            <select
+              value={lojaSelecionada}
+              onChange={(event) => {
+                setLojaSelecionada(event.target.value);
+                setBuscaProduto('');
+                setProdutoSelecionadoId('');
+                setProdutosSugeridos([]);
+                setMostrarSugestoes(false);
+              }}
+            >
               <option value="">Selecione a loja</option>
               {lojas.map((loja) => (
                 <option key={loja.id} value={loja.id}>
@@ -251,17 +316,24 @@ export default function AjusteEstoque() {
           <div className="campo bloco-busca-produto">
             <label>Adicionar item ao ajuste</label>
             <div className="linha-busca-produto">
-              <div className="campo-busca-produto-ajuste">
+              <div className="campo-busca-produto campo-busca-produto-ajuste">
                 <input
                   type="text"
                   value={buscaProduto}
                   onChange={(e) => {
                     setBuscaProduto(e.target.value);
+                    setProdutoSelecionadoId('');
                     setMostrarSugestoes(true);
                   }}
                   onFocus={() => setMostrarSugestoes(true)}
                   onBlur={() => setTimeout(() => setMostrarSugestoes(false), 200)}
+                  onKeyDown={(event) => {
+                    if (event.key !== 'Enter' || produtosSugeridos.length === 0) return;
+                    event.preventDefault();
+                    selecionarProduto(produtosSugeridos[0]);
+                  }}
                   placeholder="Pesquise por nome ou SKU..."
+                  disabled={!lojaSelecionada || carregando}
                   autoComplete="off"
                 />
                 {mostrarSugestoes && produtosSugeridos.length > 0 && (
@@ -271,17 +343,20 @@ export default function AjusteEstoque() {
                         key={produto.id}
                         type="button"
                         className="sugestao-produto"
+                        onMouseDown={(event) => event.preventDefault()}
                         onClick={() => selecionarProduto(produto)}
                       >
                         <span>{produto.nome}</span>
-                        <small>{produto.sku || 'Sem SKU'} · Saldo: {produto.saldoAtual}</small>
+                        <small>{produto.sku || produto.codigoBarras || 'Sem código'} · Saldo: {produto.saldoAtual}</small>
                       </button>
                     ))}
                   </div>
                 )}
-                {mostrarSugestoes && buscaProduto.trim() && produtosSugeridos.length === 0 && produtos.length > 0 && (
+                {mostrarSugestoes && buscaProduto.trim() && produtosSugeridos.length === 0 && (
                   <div className="lista-sugestoes-produtos">
-                    <div className="sugestao-produto sem-resultados">Nenhum produto encontrado</div>
+                    <div className="sugestao-produto sem-resultados">
+                      {carregando ? 'Carregando produtos...' : produtos.length ? 'Nenhum produto encontrado' : 'Não há produtos disponíveis para esta loja'}
+                    </div>
                   </div>
                 )}
               </div>
@@ -297,11 +372,13 @@ export default function AjusteEstoque() {
                 />
               </div>
               <div className="acoes-adicionar-item">
-                <button type="button" className="btn-entrada" onClick={() => adicionarItem('ENTRADA')} title="Adicionar entrada (+)">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                <button type="button" className="btn-entrada" onClick={() => adicionarItem('ENTRADA')} title="Entrada de produto">
+                  <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                  <span>Entrada de produto</span>
                 </button>
-                <button type="button" className="btn-saida" onClick={() => adicionarItem('SAIDA')} title="Adicionar saída (-)">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                <button type="button" className="btn-saida" onClick={() => adicionarItem('SAIDA')} title="Saída de produto">
+                  <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                  <span>Saída de produto</span>
                 </button>
               </div>
             </div>
@@ -313,7 +390,7 @@ export default function AjusteEstoque() {
               <div className="lista-itens-ajuste">
                 {itensEntrada.length > 0 && (
                   <div className="grupo-itens">
-                    <div className="grupo-titulo entrada">Entrada (+)</div>
+                    <div className="grupo-titulo entrada">Entrada de produto</div>
                     {itensEntrada.map((item, idx) => (
                       <div key={idx} className="item-ajuste entrada">
                         <div className="item-info">
@@ -331,7 +408,7 @@ export default function AjusteEstoque() {
                 )}
                 {itensSaida.length > 0 && (
                   <div className="grupo-itens">
-                    <div className="grupo-titulo saida">Saída (-)</div>
+                    <div className="grupo-titulo saida">Saída de produto</div>
                     {itensSaida.map((item, idx) => (
                       <div key={idx} className="item-ajuste saida">
                         <div className="item-info">
