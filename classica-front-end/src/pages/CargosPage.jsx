@@ -1,11 +1,69 @@
 import { useCallback, useEffect, useState } from 'react';
 import api from '../services/Api';
 
-const IconGerenciar = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
-    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-  </svg>
-);
+const rotulosPermissoes = {
+  ADMIN_TOTAL: 'Acesso administrativo total',
+  GERENCIAR_ESTOQUE: 'Gerenciar estoque',
+  REGISTRAR_VENDA: 'Registrar vendas',
+  VISUALIZAR_RELATORIOS: 'Visualizar relatórios',
+};
+
+const rotulosTermos = {
+  ADMIN: 'administração',
+  RELATORIO: 'relatório',
+  RELATORIOS: 'relatórios',
+  PERMISSAO: 'permissão',
+  PERMISSOES: 'permissões',
+  ESTOQUE: 'estoque',
+  VENDA: 'venda',
+  VENDAS: 'vendas',
+  USUARIO: 'usuário',
+  USUARIOS: 'usuários',
+  PRODUTO: 'produto',
+  PRODUTOS: 'produtos',
+  CATEGORIA: 'categoria',
+  CATEGORIAS: 'categorias',
+  CLIENTE: 'cliente',
+  CLIENTES: 'clientes',
+  FORNECEDOR: 'fornecedor',
+  FORNECEDORES: 'fornecedores',
+  FUNCIONARIO: 'funcionário',
+  FUNCIONARIOS: 'funcionários',
+  MOVIMENTACAO: 'movimentação',
+  MOVIMENTACOES: 'movimentações',
+  LOJA: 'loja',
+  LOJAS: 'lojas',
+  CARGO: 'cargo',
+  CARGOS: 'cargos',
+};
+
+const obterNomePermissao = (permissao) => {
+  if (typeof permissao === 'string') return permissao;
+  return permissao?.nome || permissao?.permissao || permissao?.codigo || '';
+};
+
+const formatarRotulo = (valor) => {
+  const original = String(valor || '').trim();
+  if (!original) return 'Outros';
+  if (rotulosPermissoes[original.toUpperCase()]) return rotulosPermissoes[original.toUpperCase()];
+
+  const palavras = original
+    .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
+    .replace(/[_-]+/g, ' ')
+    .split(/\s+/)
+    .filter(Boolean)
+    .filter((palavra, indice) => !(indice === 0 && ['ROLE', 'PERMISSION', 'PERMISSAO'].includes(palavra.toUpperCase())))
+    .map((palavra) => rotulosTermos[palavra.toUpperCase()] || palavra.toLocaleLowerCase('pt-BR'));
+
+  if (!palavras.length) return 'Outros';
+  return palavras[0].charAt(0).toLocaleUpperCase('pt-BR') + palavras[0].slice(1) + (palavras.length > 1 ? ` ${palavras.slice(1).join(' ')}` : '');
+};
+
+const normalizarBusca = (valor) => String(valor || '')
+  .normalize('NFD')
+  .replace(/[\u0300-\u036f]/g, '')
+  .toLocaleLowerCase('pt-BR');
+
 const IconFechar = () => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
     <line x1="18" y1="6" x2="6" y2="18" />
@@ -20,6 +78,7 @@ const IconChevronDown = () => (
 
 const ModalPermissoes = ({ cargo, permissoes, permissoesDoCargo, onClose, onSave, carregando }) => {
   const [permissoesSelecionadas, setPermissoesSelecionadas] = useState(permissoesDoCargo || []);
+  const [filtro, setFiltro] = useState('');
 
   const handleToggle = (permissaoId) => {
     setPermissoesSelecionadas((prev) =>
@@ -37,12 +96,25 @@ const ModalPermissoes = ({ cargo, permissoes, permissoesDoCargo, onClose, onSave
     }
   };
 
-  const permissoesAgrupadas = permissoes.reduce((acc, p) => {
-    const grupo = p.grupo || 'Outros';
+  const termoBusca = normalizarBusca(filtro);
+  const permissoesFiltradas = permissoes.filter((permissao) => {
+    const nome = obterNomePermissao(permissao);
+    const grupo = permissao.grupo || permissao.modulo || permissao.categoria || 'Outros';
+    return !termoBusca || normalizarBusca(`${nome} ${formatarRotulo(nome)} ${grupo} ${permissao.descricao || ''}`).includes(termoBusca);
+  });
+
+  const permissoesAgrupadas = permissoesFiltradas.reduce((acc, permissao) => {
+    const grupo = permissao.grupo || permissao.modulo || permissao.categoria || 'Outros';
     if (!acc[grupo]) acc[grupo] = [];
-    acc[grupo].push(p);
+    acc[grupo].push(permissao);
     return acc;
   }, {});
+  const gruposOrdenados = Object.entries(permissoesAgrupadas)
+    .sort(([grupoA], [grupoB]) => formatarRotulo(grupoA).localeCompare(formatarRotulo(grupoB), 'pt-BR'))
+    .map(([grupo, items]) => [
+      grupo,
+      items.sort((itemA, itemB) => formatarRotulo(obterNomePermissao(itemA)).localeCompare(formatarRotulo(obterNomePermissao(itemB)), 'pt-BR')),
+    ]);
 
   return (
     <div className="camada-modal">
@@ -50,26 +122,40 @@ const ModalPermissoes = ({ cargo, permissoes, permissoesDoCargo, onClose, onSave
         <button type="button" className="fechar" onClick={onClose}><IconFechar /></button>
         <p className="titulo-pequeno">{cargo.nome}</p>
         <h2>Gerenciar Permissões</h2>
+        <div className="permissoes-controles">
+          <input
+            type="search"
+            value={filtro}
+            onChange={(event) => setFiltro(event.target.value)}
+            placeholder="Filtrar permissões..."
+            aria-label="Filtrar permissões"
+          />
+          <span>{permissoesFiltradas.length} de {permissoes.length}</span>
+          <span>{permissoesSelecionadas.length} selecionadas</span>
+        </div>
         <div className="permissoes-lista">
-          {Object.entries(permissoesAgrupadas).map(([grupo, items]) => (
+          {gruposOrdenados.map(([grupo, items]) => (
             <div key={grupo} className="permissao-grupo">
-              <h3 className="permissao-grupo-titulo">{grupo}</h3>
+              <h3 className="permissao-grupo-titulo">{formatarRotulo(grupo)}</h3>
               <div className="permissao-itens">
-                {items.map((p) => (
-                  <label key={p.id} className="permissao-item">
+                {items.map((permissao) => (
+                  <label key={permissao.id} className="permissao-item">
                     <input
                       type="checkbox"
-                      checked={permissoesSelecionadas.includes(p.id)}
-                      onChange={() => handleToggle(p.id)}
+                      checked={permissoesSelecionadas.includes(permissao.id)}
+                      onChange={() => handleToggle(permissao.id)}
                       disabled={carregando}
                     />
-                    <span className="permissao-nome">{p.nome}</span>
-                    {p.descricao && <span className="permissao-descricao">{p.descricao}</span>}
+                    <span className="permissao-conteudo">
+                      <strong className="permissao-nome">{formatarRotulo(obterNomePermissao(permissao))}</strong>
+                      {permissao.descricao && <span className="permissao-descricao">{permissao.descricao}</span>}
+                    </span>
                   </label>
                 ))}
               </div>
             </div>
           ))}
+          {gruposOrdenados.length === 0 && <p className="permissoes-vazias">Nenhuma permissão encontrada.</p>}
         </div>
         <div className="acoes-form">
           <button type="button" className="secundario" onClick={onClose} disabled={carregando}>Cancelar</button>
@@ -196,29 +282,15 @@ export default function CargosPage() {
                 <th>ID</th>
                 <th>Nome</th>
                 <th>Permissões</th>
-                <th className="acoes-linha">Ações</th>
               </tr>
             </thead>
             <tbody>
               {cargosFiltrados.map((cargo, index) => (
-                <tr key={cargo.id ?? index}>
+                <tr key={cargo.id ?? index} style={{ cursor: 'pointer' }} onClick={() => abrirGerenciar(cargo)}>
                   <td>{cargo.id}</td>
                   <td>{cargo.nome}</td>
                   <td>
                     <span className="badge-permissoes">{cargo.permissoes?.length || cargo.permissoesIds?.length || 0} permissões</span>
-                  </td>
-                  <td className="acoes-linha">
-                    <button
-                      className="btn-icon"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        abrirGerenciar(cargo);
-                      }}
-                      title="Gerenciar permissões"
-                      disabled={carregandoPermissoes}
-                    >
-                      <IconGerenciar />
-                    </button>
                   </td>
                 </tr>
               ))}

@@ -592,6 +592,103 @@ const ModalEditarCliente = ({ cliente, onClose, onSuccess }) => {
   );
 };
 
+const ModalEditarCadastro = ({ registro, config, tipo, labels, referencias, onClose, onSuccess }) => {
+  const [carregando, setCarregando] = useState(false);
+  const [erro, setErro] = useState('');
+  const [formData, setFormData] = useState(() => Object.fromEntries(
+    config.fields.map((field) => {
+      const endereco = registro.endereco || {};
+      const valor = field === 'responsavelId'
+        ? registro.responsavelId ?? registro.responsavel?.id ?? ''
+        : registro[field] ?? endereco[field] ?? '';
+      return [field, valor];
+    })
+  ));
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    setCarregando(true);
+    setErro('');
+
+    let payload = formData;
+    if (tipo === 'fornecedora') {
+      payload = {
+        nome: formData.nome,
+        cnpj: formData.cnpj,
+        representante: formData.representante,
+        telefone1: formData.telefone1,
+        telefone2: formData.telefone2 || null,
+        endereco: {
+          cep: formData.cep,
+          logradouro: formData.logradouro,
+          numero: formData.numero,
+          complemento: formData.complemento || '',
+          bairro: formData.bairro,
+          cidade: formData.cidade,
+          estado: formData.estado,
+        },
+      };
+    } else if (tipo === 'loja' || tipo === 'estabelecimento') {
+      payload = {
+        ...formData,
+        responsavelId: Number(formData.responsavelId) || null,
+      };
+    }
+
+    try {
+      await api.put(`${config.endpoint}/${obterId(registro)}`, payload)
+        .catch(() => api.put(`/api${config.endpoint}/${obterId(registro)}`, payload));
+      onSuccess();
+    } catch (err) {
+      setErro(err.response?.data?.message || `Erro ao atualizar ${config.singular}.`);
+    } finally {
+      setCarregando(false);
+    }
+  };
+
+  return (
+    <div className="cartao-modal">
+      <button type="button" className="fechar" onClick={onClose}><IconFechar /></button>
+      <p className="titulo-pequeno">{mostrarValor(registro, 'nome', referencias)}</p>
+      <h2>Editar {config.singular}</h2>
+      {erro && <div className="aviso">{erro}</div>}
+      <form onSubmit={handleSubmit}>
+        <div className="form-grid">
+          {config.fields.map((field) => (
+            <div className="campo" key={field}>
+              <label>{labels[field] || field}</label>
+              {field === 'responsavelId' ? (
+                <select
+                  value={formData[field]}
+                  onChange={(event) => setFormData({ ...formData, [field]: event.target.value })}
+                  required
+                >
+                  <option value="">Selecione o responsável</option>
+                  {(referencias[field] || []).map((responsavel) => (
+                    <option key={obterId(responsavel)} value={obterId(responsavel)}>
+                      {responsavel.nome || responsavel.responsavel || responsavel.titulo}
+                    </option>
+                  ))}
+                </select>
+              ) : (
+                <input
+                  value={formData[field]}
+                  onChange={(event) => setFormData({ ...formData, [field]: event.target.value })}
+                  required={!['telefone2', 'complemento'].includes(field)}
+                />
+              )}
+            </div>
+          ))}
+        </div>
+        <div className="acoes-form">
+          <button type="button" className="secundario" onClick={onClose}>Cancelar</button>
+          <button type="submit" className="primario" disabled={carregando}>{carregando ? 'Salvando...' : 'Salvar'}</button>
+        </div>
+      </form>
+    </div>
+  );
+};
+
 export default function CadastroPage() {
   const { tipo } = useParams();
   const config = cadastroConfigs[tipo] || cadastroConfigs.produto;
@@ -606,6 +703,7 @@ export default function CadastroPage() {
   const [modalFuncionario, setModalFuncionario] = useState(null);
   const [modalProduto, setModalProduto] = useState(null);
   const [modalCliente, setModalCliente] = useState(null);
+  const [modalCadastro, setModalCadastro] = useState(null);
   const [cargos, setCargos] = useState([]);
   const [estabelecimentos, setEstabelecimentos] = useState([]);
   const [usuarios, setUsuarios] = useState([]);
@@ -669,6 +767,7 @@ export default function CadastroPage() {
     setModalFuncionario(null);
     setModalProduto(null);
     setModalCliente(null);
+    setModalCadastro(null);
   };
 
   const handleFuncionarioSuccess = () => {
@@ -726,6 +825,23 @@ export default function CadastroPage() {
     }
   };
 
+  const handleRegistroSuccess = () => {
+    closeForm();
+    carregarRegistros();
+  };
+
+  const handleDeletarRegistro = async () => {
+    const registroId = obterId(registroSelecionado);
+    if (!window.confirm(`Tem certeza que deseja remover esta ${config.singular}?`)) return;
+    try {
+      await api.delete(`${config.endpoint}/${registroId}`)
+        .catch(() => api.delete(`/api${config.endpoint}/${registroId}`));
+      handleRegistroSuccess();
+    } catch (err) {
+      setErro(err.response?.data?.message || `Erro ao remover ${config.singular}.`);
+    }
+  };
+
   const handleClienteSuccess = () => {
     closeForm();
     carregarRegistros();
@@ -777,6 +893,7 @@ export default function CadastroPage() {
                 <tr key={row.id ?? row.codigo ?? index} onClick={() => {
                   setRegistroSelecionado(row);
                   setModalAberto(true);
+                  setModalCadastro('detalhes');
                   if (tipo === 'funcionario') setModalFuncionario('detalhes');
                   if (tipo === 'produto') setModalProduto('detalhes');
                   if (tipo === 'cliente') setModalCliente('detalhes');
@@ -866,7 +983,7 @@ export default function CadastroPage() {
               onSuccess={handleClienteSuccess}
             />
           )}
-          {registroSelecionado && tipo !== 'funcionario' && tipo !== 'produto' && tipo !== 'cliente' && (
+          {registroSelecionado && tipo !== 'funcionario' && tipo !== 'produto' && tipo !== 'cliente' && modalCadastro !== 'editar' && (
             <div className="cartao-modal modal-detalhes">
               <button type="button" className="fechar" onClick={closeForm}><IconFechar /></button>
               <p className="titulo-pequeno">Detalhes do registro</p>
@@ -879,7 +996,23 @@ export default function CadastroPage() {
                   </div>
                 ))}
               </div>
+              <BotoesAcaoProduto
+                onEditar={() => setModalCadastro('editar')}
+                onRemover={handleDeletarRegistro}
+                desabilitado={carregando}
+              />
             </div>
+          )}
+          {registroSelecionado && tipo !== 'funcionario' && tipo !== 'produto' && tipo !== 'cliente' && modalCadastro === 'editar' && (
+            <ModalEditarCadastro
+              registro={registroSelecionado}
+              config={config}
+              tipo={tipo}
+              labels={labels}
+              referencias={referencias}
+              onClose={() => setModalCadastro('detalhes')}
+              onSuccess={handleRegistroSuccess}
+            />
           )}
           {!registroSelecionado && tipo === 'funcionario' && (
             <div className="cartao-modal">
