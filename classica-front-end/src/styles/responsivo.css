@@ -1,3 +1,17 @@
+html {
+  overflow-x: hidden;
+}
+
+body {
+  min-width: 320px;
+}
+
+img,
+svg {
+  display: block;
+  max-width: 100%;
+}
+
 /* Tablets grandes e abaixo */
 @media (max-width: 1200px) {
   .barra-lateral {
@@ -7,15 +21,6 @@
 
   .barra-lateral.aberto {
     transform: translateX(0);
-  }
-
-  .fundo {
-    position: fixed;
-    inset: 82px 0 0;
-    z-index: 3;
-    display: block;
-    border: 0;
-    background: #20241f70;
   }
 
   .conteudo-pagina {
@@ -112,7 +117,6 @@
     width: 100%;
     min-width: 0;
   }
-
 }
 
 /* Celulares e abaixo */
@@ -127,20 +131,8 @@
     width: 95px;
   }
 
-  .migalha {
-    padding-left: 12px;
-  }
-
-  .migalha span {
-    display: none;
-  }
-
   .barra-lateral {
     top: 70px;
-  }
-
-  .fundo {
-    inset: 70px 0 0;
   }
 
   .conteudo-pagina {
@@ -162,11 +154,6 @@
 
   .marca-logo {
     width: 82px;
-  }
-
-  .migalha {
-    padding-left: 10px;
-    display: none;
   }
 
   .alternador-menu {

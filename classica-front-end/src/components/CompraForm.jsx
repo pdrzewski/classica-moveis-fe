@@ -370,16 +370,6 @@ export default function CompraForm() {
             {fornecedor && !carregandoProdutos && <span className="info-value">{fornecedor.nome || fornecedor.razaoSocial || fornecedor.titulo}</span>}
           </div>
 
-          <div className="campo">
-            <label>Forma de pagamento *</label>
-            <select value={formaPagamento} onChange={(e) => setFormaPagamento(e.target.value)} required>
-              <option value="DINHEIRO">Dinheiro</option>
-              <option value="CARTAO">Cartão</option>
-              <option value="PIX">PIX</option>
-              <option value="BOLETO">Boleto</option>
-              <option value="CREDITO">Crédito</option>
-            </select>
-          </div>
         </div>
 
         <div className="campo bloco-produtos">
@@ -423,74 +413,6 @@ export default function CompraForm() {
             </div>
           </div>
 
-          {itens.length === 0 ? (
-            <div className="lista-vazia">{fornecedorId ? 'Nenhum produto selecionado' : 'Selecione um fornecedor para ver os produtos'}</div>
-          ) : (
-            <>
-              <div className="tabela-itens-header">
-                <div className="col-produto">Produto</div>
-                <div className="col-qtd">Qtd</div>
-                <div className="col-vl">Vl. Unit.</div>
-                <div className="col-sub">Subtotal</div>
-                <div className="col-saldo">Saldo</div>
-                <div className="col-acoes"></div>
-              </div>
-              <div className="lista-itens">
-                {itens.map((item) => {
-                  const saldo = obterSaldoDisponivel(Number(item.produtoId));
-                  return (
-                    <div key={item.produtoId} className="item-movimentacao">
-                      <div className="col-produto">
-                        <span>{item.produtoNome}</span>
-                        <small className="texto-secundario">{item.produtoSku} • {item.unidade}</small>
-                      </div>
-                      <div className="col-qtd">
-                        <input
-                          type="text"
-                          inputMode="numeric"
-                          pattern="[0-9]*"
-                          min="1"
-                          max={saldo > 0 ? saldo : undefined}
-                          value={String(item.quantidade)}
-                          onChange={(event) => {
-                            const val = event.target.value.replace(/\D/g, '');
-                            alterarQuantidade(item.produtoId, val);
-                          }}
-                          onBlur={(event) => {
-                            const val = event.target.value.replace(/\D/g, '');
-                            if (val === '' || Number(val) < 1) {
-                              alterarQuantidade(item.produtoId, 1);
-                            } else if (saldo > 0 && Number(val) > saldo) {
-                              alterarQuantidade(item.produtoId, saldo);
-                            }
-                          }}
-                          title={saldo > 0 ? `Máximo disponível: ${saldo}` : ''}
-                        />
-                      </div>
-                      <div className="col-vl">
-                        <input
-                          type="number"
-                          min="0"
-                          step="0.01"
-                          value={String(item.valorUnitario)}
-                          onChange={(event) => alterarValorUnitario(item.produtoId, event.target.value)}
-                        />
-                      </div>
-                      <div className="col-sub">
-                        <strong>R$ {Number(item.subtotal || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong>
-                      </div>
-                      <div className="col-saldo">
-                        {saldo > 0 ? <span className="texto-secundario">{saldo} {item.unidade}</span> : <span className="texto-secundario">—</span>}
-                      </div>
-                      <div className="col-acoes">
-                        <button type="button" className="btn-remover" onClick={() => removerProduto(item.produtoId)} title="Remover">×</button>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </>
-          )}
         </div>
 
         <div className="campo campo-observacao">
@@ -503,7 +425,85 @@ export default function CompraForm() {
           />
         </div>
 
-        <div className="resumo-compra">
+        <section className="detalhes-compra" aria-labelledby="titulo-detalhes-compra">
+          <div className="detalhes-compra-cabecalho">
+            <div>
+              <p className="titulo-pequeno">Conferência</p>
+              <h2 id="titulo-detalhes-compra">Detalhes da compra</h2>
+            </div>
+            <span>{itens.length} {itens.length === 1 ? 'item' : 'itens'}</span>
+          </div>
+          {itens.length === 0 ? (
+            <div className="lista-vazia">Os produtos adicionados aparecerão aqui para conferência.</div>
+          ) : (
+            <div className="tabela-compra-scroll">
+              <div className="tabela-compra-detalhes">
+                <div className="tabela-itens-header">
+                  <div className="col-produto">Produto</div>
+                  <div className="col-qtd">Qtd</div>
+                  <div className="col-vl">Vl. Unit.</div>
+                  <div className="col-sub">Subtotal</div>
+                  <div className="col-saldo">Saldo</div>
+                  <div className="col-acoes"></div>
+                </div>
+                <div className="lista-itens">
+                  {itens.map((item) => {
+                    const saldo = obterSaldoDisponivel(Number(item.produtoId));
+                    return (
+                      <div key={item.produtoId} className="item-movimentacao">
+                        <div className="col-produto">
+                          <span>{item.produtoNome}</span>
+                          <small className="texto-secundario">{item.produtoSku} • {item.unidade}</small>
+                        </div>
+                        <div className="col-qtd">
+                          <input
+                            type="text"
+                            inputMode="numeric"
+                            pattern="[0-9]*"
+                            value={String(item.quantidade)}
+                            onChange={(event) => alterarQuantidade(item.produtoId, event.target.value.replace(/\D/g, ''))}
+                            onBlur={(event) => {
+                              const quantidade = event.target.value.replace(/\D/g, '');
+                              if (quantidade === '' || Number(quantidade) < 1) alterarQuantidade(item.produtoId, 1);
+                              else if (saldo > 0 && Number(quantidade) > saldo) alterarQuantidade(item.produtoId, saldo);
+                            }}
+                            title={saldo > 0 ? `Máximo disponível: ${saldo}` : ''}
+                          />
+                        </div>
+                        <div className="col-vl">
+                          <input
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            value={String(item.valorUnitario)}
+                            onChange={(event) => alterarValorUnitario(item.produtoId, event.target.value)}
+                          />
+                        </div>
+                        <div className="col-sub">
+                          <strong>R$ {Number(item.subtotal || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong>
+                        </div>
+                        <div className="col-saldo">
+                          {saldo > 0 ? <span className="texto-secundario">{saldo} {item.unidade}</span> : <span className="texto-secundario">—</span>}
+                        </div>
+                        <div className="col-acoes">
+                          <button type="button" className="btn-remover" onClick={() => removerProduto(item.produtoId)} title="Remover">×</button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          )}
+        </section>
+
+        <section className="resumo-compra" aria-labelledby="titulo-resumo-compra">
+          <div className="resumo-compra-cabecalho">
+            <div>
+              <p className="titulo-pequeno">Fechamento</p>
+              <h2 id="titulo-resumo-compra">Resumo da compra</h2>
+            </div>
+          </div>
           <div className="resumo-grid">
             <div className="resumo-item">
               <span className="resumo-label">Total de itens</span>
@@ -534,6 +534,17 @@ export default function CompraForm() {
               <span className="resumo-valor">{dataAtual}</span>
             </div>
           </div>
+        </section>
+
+        <div className="campo campo-pagamento-compra">
+          <label htmlFor="forma-pagamento-compra">Forma de pagamento *</label>
+          <select id="forma-pagamento-compra" value={formaPagamento} onChange={(event) => setFormaPagamento(event.target.value)} required>
+            <option value="DINHEIRO">Dinheiro</option>
+            <option value="CARTAO_CREDITO">Cartão de crédito</option>
+            <option value="CARTAO_DEBITO">Cartão de débito</option>
+            <option value="PIX">PIX</option>
+            <option value="BOLETO">Boleto</option>
+          </select>
         </div>
 
         {notice && <div className="aviso">{notice}</div>}

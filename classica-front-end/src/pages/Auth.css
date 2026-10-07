@@ -15,8 +15,9 @@ body {
 }
 
 .logo-autenticacao img {
-  width: 180px;
+  width: min(180px, 42vw);
   height: auto;
+  max-width: 100%;
 }
 
 .container-autenticacao {
@@ -113,7 +114,25 @@ button:disabled {
 }
 
 @media (max-width: 768px) {
+  .logo-autenticacao {
+    padding-top: 24px;
+  }
+
   .cartao-autenticacao {
     padding: 24px 18px;
+  }
+}
+
+@media (max-width: 480px) {
+  .logo-autenticacao img {
+    width: 140px;
+  }
+
+  .cartao-autenticacao {
+    padding: 22px 16px;
+  }
+
+  .cartao-autenticacao h1 {
+    font-size: 1.6rem;
   }
 }
