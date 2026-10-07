@@ -25,20 +25,12 @@ const IconConcluir = () => (
   </svg>
 );
 
-const IconDetalhes = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
-    <circle cx="12" cy="12" r="10" />
-    <line x1="12" y1="16" x2="12" y2="12" />
-    <line x1="12" y1="8" x2="12.01" y2="8" />
-  </svg>
-);
-
-const ModalDetalhes = ({ venda, onClose }) => {
+const ModalDetalhes = ({ venda, onClose, onConcluir, concluindo }) => {
   if (!venda) return null;
 
   return (
     <div className="camada-modal">
-      <div className="cartao-modal modal-detalhes" style={{ maxWidth: '700px' }}>
+      <div className="cartao-modal modal-detalhes">
         <button type="button" className="fechar" aria-label="Fechar detalhes" onClick={onClose}>×</button>
         <p className="titulo-pequeno">Venda #{venda.id}</p>
         <h2>Detalhes da venda pendente</h2>
@@ -109,6 +101,14 @@ const ModalDetalhes = ({ venda, onClose }) => {
             </tbody>
           </table>
         </div>
+        <div className="acoes-form" style={{ justifyContent: 'flex-end', gap: '12px' }}>
+          <button type="button" className="secundario" onClick={onClose}>Fechar</button>
+          {venda.status !== 'CONCLUIDO' && (
+            <button type="button" className="primario" onClick={onConcluir} disabled={concluindo}>
+              <IconConcluir /> {concluindo ? 'Concluindo...' : 'Concluir/Entregar'}
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -166,7 +166,9 @@ export default function VendasPendentes() {
     setConcluindo(true);
     try {
       await api.patch(`/movimentacoes/${vendaId}/concluir`);
-      buscarVendas();
+      setDetalhesAberto(false);
+      setVendaSelecionada(null);
+      await buscarVendas();
     } catch (err) {
       setErro(err.response?.data?.message || 'Erro ao concluir venda.');
     } finally {
@@ -223,14 +225,13 @@ export default function VendasPendentes() {
                 <th>Pagamento</th>
                 <th>Valor total</th>
                 <th>Status</th>
-                <th style={{ width: '120px' }}>Ações</th>
               </tr>
             </thead>
             <tbody>
               {carregando ? (
-                <tr><td colSpan="10" style={{ textAlign: 'center' }}>Carregando vendas pendentes...</td></tr>
+                <tr><td colSpan="9" style={{ textAlign: 'center' }}>Carregando vendas pendentes...</td></tr>
               ) : vendas.length === 0 ? (
-                <tr><td colSpan="10" style={{ textAlign: 'center' }}>Nenhuma venda pendente encontrada.</td></tr>
+                <tr><td colSpan="9" style={{ textAlign: 'center' }}>Nenhuma venda pendente encontrada.</td></tr>
               ) : (
                 vendas.map((venda) => (
                   <tr key={venda.id} style={{ cursor: 'pointer' }} onClick={() => handleVerDetalhes(venda)}>
@@ -243,23 +244,6 @@ export default function VendasPendentes() {
                     <td>{venda.formaPagamento}</td>
                     <td><strong>R$ {formatarMoeda(venda.valorTotal)}</strong></td>
                     <td><span className={`etiqueta-estoque ${venda.status === 'CONCLUIDO' ? '' : 'baixo'}`}>{venda.status}</span></td>
-                    <td>
-                      {venda.status === 'CONCLUIDO' ? (
-                        <span className="btn-icon concluido" title="Concluída">
-                          <IconConcluir />
-                        </span>
-                      ) : (
-                        <button
-                          type="button"
-                          className="btn-icon"
-                          onClick={(e) => { e.stopPropagation(); handleConcluir(venda.id); }}
-                          disabled={concluindo}
-                          title="Concluir/Entregar"
-                        >
-                          <IconConcluir />
-                        </button>
-                      )}
-                    </td>
                   </tr>
                 ))
               )}
@@ -272,6 +256,8 @@ export default function VendasPendentes() {
         <ModalDetalhes
           venda={vendaSelecionada}
           onClose={() => { setDetalhesAberto(false); setVendaSelecionada(null); }}
+          onConcluir={() => handleConcluir(vendaSelecionada.id)}
+          concluindo={concluindo}
         />
       )}
     </section>

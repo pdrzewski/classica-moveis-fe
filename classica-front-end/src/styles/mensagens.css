@@ -29,15 +29,22 @@
 
 .cartao-modal {
   position: relative;
-  width: min(680px, 100%);
+  width: min(900px, 100%);
+  max-width: 900px;
   max-height: calc(100dvh - 40px);
   overflow-y: auto;
   padding: 56px 26px 24px;
   background: #fff;
 }
 
-.modal-detalhes {
+.cartao-modal.modal-detalhes {
   width: min(1040px, 100%);
+  max-width: 1040px;
+}
+
+.cartao-modal.modal-permissoes {
+  width: min(900px, 100%);
+  max-width: 900px;
 }
 
 .detalhes-grid {

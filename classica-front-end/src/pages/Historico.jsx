@@ -151,14 +151,6 @@ const ModalDetalhes = ({ movimentacao, onClose }) => {
   );
 };
 
-const IconDetalhes = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
-    <circle cx="12" cy="12" r="10" />
-    <line x1="12" y1="16" x2="12" y2="12" />
-    <line x1="12" y1="8" x2="12.01" y2="8" />
-  </svg>
-);
-
 export default function Historico() {
   const [movimentacoes, setMovimentacoes] = useState([]);
   const [carregando, setCarregando] = useState(true);
@@ -296,14 +288,13 @@ export default function Historico() {
                 <th>Loja destino</th>
                 <th>Total itens</th>
                 <th>Status</th>
-                <th style={{ width: '80px' }}>Ações</th>
               </tr>
             </thead>
             <tbody>
               {carregando ? (
-                <tr><td colSpan="7" style={{ textAlign: 'center' }}>Carregando histórico...</td></tr>
+                <tr><td colSpan="6" style={{ textAlign: 'center' }}>Carregando histórico...</td></tr>
               ) : filtradas.length === 0 ? (
-                <tr><td colSpan="7" style={{ textAlign: 'center' }}>Nenhuma movimentação encontrada.</td></tr>
+                <tr><td colSpan="6" style={{ textAlign: 'center' }}>Nenhuma movimentação encontrada.</td></tr>
               ) : (
                 filtradas.map((mov) => (
                   <tr key={mov.id} style={{ cursor: 'pointer' }} onClick={() => handleVerDetalhes(mov)}>
@@ -313,16 +304,6 @@ export default function Historico() {
                     <td>{mov.tipoMovimentacao === 'VENDA' ? '—' : mov.estabelecimentoDestinoNome || '—'}</td>
                     <td>{mov.itens?.reduce((s, i) => s + Number(i.quantidade || 0), 0) || 0}</td>
                     <td><span className={`etiqueta-estoque ${getStatusClass(mov.status)}`}>{mov.status}</span></td>
-                    <td>
-                      <button
-                        type="button"
-                        className="btn-icon"
-                        onClick={(e) => { e.stopPropagation(); handleVerDetalhes(mov); }}
-                        title="Ver detalhes"
-                      >
-                        <IconDetalhes />
-                      </button>
-                    </td>
                   </tr>
                 ))
               )}
