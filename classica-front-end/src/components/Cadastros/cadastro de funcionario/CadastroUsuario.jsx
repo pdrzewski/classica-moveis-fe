@@ -101,7 +101,7 @@ export default function CadastroForm({ onSuccess }) {
         senha: form.senha,
       };
 
-      const respostaUsuario = await api.post('/usuarios', usuario).catch(() => api.post('/api/usuarios', usuario));
+      const respostaUsuario = await api.post('/usuarios', usuario);
       const usuarioId = respostaUsuario?.data?.id ?? respostaUsuario?.data?.usuarioId ?? respostaUsuario?.data?.data?.id;
 
       if (!usuarioId) {
@@ -109,19 +109,19 @@ export default function CadastroForm({ onSuccess }) {
       }
 
       const colaborador = {
-        nome: form.nome,
+        nome: form.nome.trim(),
         cargoId: Number(form.cargoId),
         usuarioId: Number(usuarioId),
         dataAdmissao: form.dataAdmissao,
-        dataNascimento: form.dataNascimento,
+        dataNascimento: form.dataNascimento || null,
         salario: Number(form.salario || 0),
-        carteiraTrabalho: form.carteiraTrabalho,
+        carteiraTrabalho: form.carteiraTrabalho.trim() || null,
         comissao: Number(form.comissao || 0),
         estabelecimentoId: form.estabelecimentoId ? Number(form.estabelecimentoId) : null,
-        cpf: form.cpf,
+        cpf: form.cpf.replace(/\D/g, '').slice(0, 11),
       };
 
-      await api.post('/colaboradores', colaborador).catch(() => api.post('/api/colaboradores', colaborador));
+      await api.post('/colaboradores', colaborador);
 
       onSuccess?.();
     } catch (err) {

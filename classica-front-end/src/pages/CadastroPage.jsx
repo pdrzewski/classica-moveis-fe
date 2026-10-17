@@ -61,8 +61,8 @@ const ModalEditarProduto = ({ produto, onClose, onSuccess, fornecedores, categor
   const [carregando, setCarregando] = useState(false);
   const [erro, setErro] = useState('');
   const [formData, setFormData] = useState({
-    fornecedorId: produto?.fornecedorId || '',
-    categoriaId: produto?.categoriaId || '',
+    fornecedorId: produto?.fornecedorId ?? produto?.fornecedor?.id ?? produto?.fornecedor_id ?? '',
+    categoriaId: produto?.categoriaId ?? produto?.categoria?.id ?? produto?.categoria_id ?? '',
     nome: produto?.nome || '',
     sku: produto?.sku || '',
     codigoBarras: produto?.codigoBarras || '',
@@ -92,7 +92,7 @@ const ModalEditarProduto = ({ produto, onClose, onSuccess, fornecedores, categor
         estoqueMinimo: Number(formData.estoqueMinimo) || 0,
         ativo: Boolean(formData.ativo),
       };
-      await api.put(`/produtos/${produto.id}`, payload).catch(() => api.put(`/api/produtos/${produto.id}`, payload));
+      await api.put(`/produtos/${produto.id}`, payload);
       onSuccess();
     } catch (err) {
       setErro(err.response?.data?.message || 'Erro ao atualizar produto.');
@@ -295,7 +295,7 @@ const ModalEditarFuncionario = ({ colaborador, onClose, onSuccess, cargos, estab
         estabelecimentoId: Number(formData.estabelecimentoId) || null,
         cpf: formData.cpf || null,
       };
-      await api.put(`/colaboradores/${colaborador.id}`, payload).catch(() => api.put(`/api/colaboradores/${colaborador.id}`, payload));
+      await api.put(`/colaboradores/${colaborador.id}`, payload);
       onSuccess();
     } catch (err) {
       setErro(err.response?.data?.message || 'Erro ao atualizar funcionário.');
@@ -387,7 +387,7 @@ const ModalFeriasFuncionario = ({ colaborador, onClose, onSuccess }) => {
     setCarregando(true);
     setErro('');
     try {
-      await api.patch(`/colaboradores/${colaborador.id}/ferias`, feriasData).catch(() => api.patch(`/api/colaboradores/${colaborador.id}/ferias`, feriasData));
+      await api.patch(`/colaboradores/${colaborador.id}/ferias`, feriasData);
       onSuccess();
     } catch (err) {
       setErro(err.response?.data?.message || 'Erro ao registrar férias.');
@@ -504,7 +504,7 @@ const ModalEditarCliente = ({ cliente, onClose, onSuccess }) => {
         endereco: enderecoPayload,
         enderecoId: formData.enderecoId ? Number(formData.enderecoId) : null,
       };
-      await api.put(`/clientes/${cliente.id}`, payload).catch(() => api.put(`/api/clientes/${cliente.id}`, payload));
+      await api.put(`/clientes/${cliente.id}`, payload);
       onSuccess();
     } catch (err) {
       setErro(err.response?.data?.message || 'Erro ao atualizar cliente.');
@@ -636,8 +636,7 @@ const ModalEditarCadastro = ({ registro, config, tipo, labels, referencias, onCl
     }
 
     try {
-      await api.put(`${config.endpoint}/${obterId(registro)}`, payload)
-        .catch(() => api.put(`/api${config.endpoint}/${obterId(registro)}`, payload));
+      await api.put(`${config.endpoint}/${obterId(registro)}`, payload);
       onSuccess();
     } catch (err) {
       setErro(err.response?.data?.message || `Erro ao atualizar ${config.singular}.`);
@@ -778,7 +777,7 @@ export default function CadastroPage() {
   const handleDeletar = async (colaboradorId) => {
     if (!window.confirm('Tem certeza que deseja remover este funcionário?')) return;
     try {
-      await api.delete(`/colaboradores/${colaboradorId}`).catch(() => api.delete(`/api/colaboradores/${colaboradorId}`));
+      await api.delete(`/colaboradores/${colaboradorId}`);
       handleFuncionarioSuccess();
     } catch (err) {
       setErro(err.response?.data?.message || 'Erro ao remover funcionário.');
@@ -808,7 +807,7 @@ export default function CadastroPage() {
   const handleDeletarProduto = async (produtoId) => {
     if (!window.confirm('Tem certeza que deseja remover este produto?')) return;
     try {
-      await api.delete(`/produtos/${produtoId}`).catch(() => api.delete(`/api/produtos/${produtoId}`));
+      await api.delete(`/produtos/${produtoId}`);
       handleProdutoSuccess();
     } catch (err) {
       setErro(err.response?.data?.message || 'Erro ao remover produto.');
@@ -818,7 +817,7 @@ export default function CadastroPage() {
   const handleDeletarCliente = async (clienteId) => {
     if (!window.confirm('Tem certeza que deseja remover este cliente?')) return;
     try {
-      await api.delete(`/clientes/${clienteId}`).catch(() => api.delete(`/api/clientes/${clienteId}`));
+      await api.delete(`/clientes/${clienteId}`);
       handleClienteSuccess();
     } catch (err) {
       setErro(err.response?.data?.message || 'Erro ao remover cliente.');
@@ -834,8 +833,7 @@ export default function CadastroPage() {
     const registroId = obterId(registroSelecionado);
     if (!window.confirm(`Tem certeza que deseja remover esta ${config.singular}?`)) return;
     try {
-      await api.delete(`${config.endpoint}/${registroId}`)
-        .catch(() => api.delete(`/api${config.endpoint}/${registroId}`));
+      await api.delete(`${config.endpoint}/${registroId}`);
       handleRegistroSuccess();
     } catch (err) {
       setErro(err.response?.data?.message || `Erro ao remover ${config.singular}.`);

@@ -84,25 +84,25 @@ export default function CadastroCliente({ onSuccess }) {
 
     try {
       const payload = {
-        nome: form.nome,
-        documento: form.documento,
-        telefone1: form.telefone1,
-        telefone2: form.telefone2 || null,
-        email: form.email || null,
-        observacao: form.observacao || null,
-        ie: form.ie || null,
+        nome: form.nome.trim(),
+        documento: form.documento.replace(/\D/g, '').slice(0, 11),
+        telefone1: form.telefone1.trim(),
+        telefone2: form.telefone2.trim() || null,
+        email: form.email.trim() || null,
+        observacao: form.observacao.trim() || null,
+        ie: form.ie.trim() || null,
         endereco: {
-          cep: form.cep,
-          logradouro: form.logradouro,
-          numero: form.numero,
-          complemento: form.complemento || '',
-          bairro: form.bairro,
-          cidade: form.cidade,
-          estado: form.estado,
+          cep: form.cep.replace(/\D/g, '').slice(0, 8),
+          logradouro: form.logradouro.trim(),
+          numero: form.numero.trim() || 'S/N',
+          complemento: form.complemento.trim() || '',
+          bairro: form.bairro.trim(),
+          cidade: form.cidade.trim(),
+          estado: form.estado.trim(),
         },
       };
 
-      await api.post('/clientes', payload).catch(() => api.post('/api/clientes', payload));
+      await api.post('/clientes', payload);
       onSuccess?.();
     } catch (err) {
       setError(err.response?.data?.message || err.message || 'Erro ao cadastrar cliente');
