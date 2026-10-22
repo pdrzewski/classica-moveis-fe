@@ -21,9 +21,7 @@ const mensagemTecnica = (mensagem, status) => {
 };
 
 const api = axios.create({
-  baseURL: import.meta.env.DEV
-    ? '/backend-api'
-    : (import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080'),
+  baseURL: '/backend-api',
   withCredentials: true,
 });
 

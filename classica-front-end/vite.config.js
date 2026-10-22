@@ -2,6 +2,7 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
 // https://vite.dev/config/
+// var ip-backend = ${process.env.IP_BACKEND }}; 
 export default defineConfig({
   plugins: [react()],
   server: {
