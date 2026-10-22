@@ -112,7 +112,7 @@ export default function CadastroProduto({ onSuccess }) {
         ativo: Boolean(form.ativo),
       };
 
-      await api.post('/api/produtos', payload).catch(() => api.post('/api/produtos', payload));
+      await api.post('/produtos', payload);
       onSuccess?.();
     } catch (err) {
       setError(err.response?.data?.message || err.message || 'Erro ao cadastrar produto');

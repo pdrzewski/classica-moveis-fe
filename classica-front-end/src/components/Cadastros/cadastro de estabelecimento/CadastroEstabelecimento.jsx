@@ -120,20 +120,20 @@ export default function CadastroEstabelecimento({ onSuccess }) {
 
     try {
       const payload = {
-        nome: form.nome,
-        cnpj: form.cnpj,
-        telefone: form.telefone,
+        nome: form.nome.trim(),
+        cnpj: form.cnpj.replace(/\D/g, '').slice(0, 14),
+        telefone: form.telefone.trim(),
         responsavelId: Number(form.responsavelId),
-        cep: form.cep,
-        logradouro: form.logradouro,
-        bairro: form.bairro,
-        cidade: form.cidade,
-        numero: form.numero,
-        complemento: form.complemento || '',
-        estado: form.estado,
+        cep: form.cep.replace(/\D/g, '').slice(0, 8),
+        logradouro: form.logradouro.trim(),
+        bairro: form.bairro.trim(),
+        cidade: form.cidade.trim(),
+        numero: form.numero.trim() || 'S/N',
+        complemento: form.complemento.trim() || '',
+        estado: form.estado.trim(),
       };
 
-      await api.post('/estabelecimentos', payload).catch(() => api.post('/api/estabelecimentos', payload));
+      await api.post('/estabelecimentos', payload);
       onSuccess?.();
     } catch (err) {
       setError(err.response?.data?.message || err.message || 'Erro ao cadastrar estabelecimento');

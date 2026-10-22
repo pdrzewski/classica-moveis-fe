@@ -694,15 +694,17 @@ export default function VendaForm() {
     try {
       const gruposComPagamentos = dividirPagamentosPorOrigem(grupos);
       for (const { loja, itens: itensDaLoja, pagamentos: pagamentosDaOrigem } of gruposComPagamentos) {
-        const payload = {
+        const clienteId = clienteSelecionado ? Number(clienteSelecionado.id || clienteSelecionado.clienteId || clienteSelecionado.cliente_id) : null;
+      const colaboradorId = Number(colaboradorSelecionadoId || 0);
+      const payload = {
           tipoMovimentacao: 'VENDA',
           pagamentos: pagamentosDaOrigem,
           observacao: observacao || 'Venda de produto',
           estabelecimentoOrigemId: Number(idDaLoja(loja)),
           estabelecimentoDestinoId: null,
-          clienteId: Number(clienteSelecionado.id || clienteSelecionado.clienteId || clienteSelecionado.cliente_id),
+          clienteId: Number.isFinite(clienteId) ? clienteId : null,
           fornecedorId: null,
-          colaboradorId: Number(colaboradorSelecionadoId),
+          colaboradorId: Number.isFinite(colaboradorId) ? colaboradorId : null,
           itens: itensDaLoja.map((item) => ({
             produtoId: Number(item.produtoId),
             quantidade: paraNumero(item.quantidade),
