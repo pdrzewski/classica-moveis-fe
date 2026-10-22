@@ -7,7 +7,18 @@ const listarDados = (resposta) => {
   if (Array.isArray(dados)) return dados;
   if (Array.isArray(dados?.content)) return dados.content;
   if (Array.isArray(dados?.dados)) return dados.dados;
+  if (Array.isArray(dados?.movimentacoes)) return dados.movimentacoes;
+  if (Array.isArray(dados?.data)) return dados.data;
   return [];
+};
+
+const buscar = async (rota) => {
+  try {
+    return await api.get(rota);
+  } catch (erro) {
+    if (erro.response?.status !== 404) throw erro;
+    return api.get(`/api${rota}`);
+  }
 };
 
 const formatarData = (data) => {
@@ -172,7 +183,7 @@ export default function Historico() {
   useEffect(() => {
     const carregarLojas = async () => {
       try {
-        const resp = await api.get('/estabelecimentos').catch(() => api.get('/api/estabelecimentos'));
+        const resp = await buscar('/estabelecimentos');
         setLojas(listarDados(resp));
       } catch {
         setLojas([]);
@@ -185,7 +196,7 @@ export default function Historico() {
     setCarregando(true);
     setErro('');
     try {
-      const resp = await api.get('/movimentacoes/historico');
+      const resp = await buscar('/movimentacoes/historico');
       setMovimentacoes(listarDados(resp));
     } catch (err) {
       setErro(err.response?.data?.message || 'Não foi possível carregar o histórico.');
@@ -202,7 +213,7 @@ export default function Historico() {
   const handleVerDetalhes = async (mov) => {
     setCarregandoDetalhes(true);
     try {
-      const resp = await api.get(`/movimentacoes/${mov.id}`);
+      const resp = await buscar(`/movimentacoes/${mov.id}`);
       const detalhes = listarDados(resp);
       if (detalhes.length) {
         setMovimentacaoSelecionada(detalhes[0]);

@@ -48,6 +48,10 @@
 
 .metrica {
   position: relative;
+  display: flex;
+  flex-direction: column;
+  align-self: stretch;
+  height: 150px;
   min-height: 150px;
   padding: 20px 18px;
   border: 1px solid var(--line);
@@ -79,8 +83,19 @@
   font-size: 11px;
 }
 
-.metrica.aviso small {
-  color: #b9783e;
+.metrica-alerta strong,
+.metrica-alerta .icone-metrica {
+  color: #b42318;
+}
+
+.metrica-alerta small {
+  color: #b42318;
+}
+
+.metrica-erro strong,
+.metrica-erro .icone-metrica,
+.metrica-erro small {
+  color: #b42318;
 }
 
 .grade-inicio {
