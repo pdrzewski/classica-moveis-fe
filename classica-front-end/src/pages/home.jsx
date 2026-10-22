@@ -1,31 +1,92 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import api from '../services/Api';
 
-const metrics = [
-  { label: 'Produtos', value: '-', note: 'Sem dados', icon: '▦' },
-  { label: 'Estoque baixo', value: '-', note: 'Sem dados', icon: '!' },
-  { label: 'Movimentações', value: '-', note: 'Sem dados', icon: '⇄' },
-  { label: 'Lojas', value: '-', note: 'Sem dados', icon: '⌂' },
-];
+const listarDados = (resposta) => {
+  const dados = resposta?.data;
+  if (Array.isArray(dados)) return dados;
+  if (Array.isArray(dados?.content)) return dados.content;
+  if (Array.isArray(dados?.dados)) return dados.dados;
+  if (Array.isArray(dados?.items)) return dados.items;
+  if (Array.isArray(dados?.results)) return dados.results;
+  if (Array.isArray(dados?.movimentacoes)) return dados.movimentacoes;
+  if (Array.isArray(dados?.data)) return dados.data;
+  return [];
+};
 
-const quickLinks = [
-  { label: 'Cadastrar produto', to: '/cadastro/produto' },
-  { label: 'Registrar movimentação', to: '/movimentacao' },
-  { label: 'Consultar estoque', to: '/estoque' },
-];
+const contarRegistros = (resposta, normalizar) => {
+  const dados = resposta?.data;
+  const total = dados?.totalElements
+    ?? dados?.totalCount
+    ?? dados?.totalRegistros
+    ?? dados?.totalMovimentacoes
+    ?? dados?.total;
+  if (total !== undefined && Number.isFinite(Number(total))) return Number(total);
+  if (typeof dados === 'number') return dados;
+  return normalizar(resposta).length;
+};
 
-function Metric({ label, value, note, icon, warning }) {
+const buscar = async (rota) => {
+  try {
+    return await api.get(rota);
+  } catch (erro) {
+    if (erro.response?.status !== 404) throw erro;
+    return api.get(`/api${rota}`);
+  }
+};
+
+const nomeColaborador = (item) => (
+  item?.nome || item?.colaboradorNome || item?.nomeColaborador || item?.colaborador?.nome || item?.nomeCompleto || 'Colaborador'
+);
+
+const formatarData = (data) => {
+  if (!data) return '';
+  const somenteData = String(data).split('T')[0];
+  return new Date(`${somenteData}T00:00:00`).toLocaleDateString('pt-BR');
+};
+
+const normalizarEquipe = (lista, tipo) => lista.map((item, indice) => {
+  const dias = item.diasParaAniversario ?? item.dias_para_aniversario ?? item.diasRestantes ?? item.dias;
+  return {
+    ...item,
+    id: item.id ?? item.colaboradorId ?? item.funcionarioId ?? `${tipo}-${indice}`,
+    nome: nomeColaborador(item),
+    dataNascimento: item.dataNascimento || item.data_nascimento || item.nascimento || item.colaborador?.dataNascimento,
+    dataInicio: item.dataInicio || item.data_inicio || item.inicioFerias || item.ferias?.dataInicio,
+    dataFim: item.dataFim || item.data_fim || item.fimFerias || item.ferias?.dataFim,
+    diasParaAniversario: dias === undefined || dias === null ? undefined : Number(dias),
+  };
+});
+
+const normalizarEstoqueBaixo = (lista) => lista.map((item, indice) => {
+  const produto = item.produto || item;
+  const estoqueAtual = Number(item.estoqueAtual ?? item.saldoDisponivel ?? item.quantidade ?? item.saldo ?? 0);
+  const estoqueMinimo = Number(produto.estoqueMinimo ?? produto.estoque_minimo ?? 0);
+  return {
+    id: item.id ?? produto.id ?? produto.produtoId ?? `estoque-baixo-${indice}`,
+    produto: {
+      ...produto,
+      id: produto.id ?? produto.produtoId ?? item.produtoId ?? `produto-${indice}`,
+      nome: produto.nome || produto.produtoNome || 'Produto sem nome',
+      sku: produto.sku || produto.codigo || produto.codigoBarras || produto.codigo_barras || '—',
+      estoqueMinimo,
+    },
+    estoqueAtual,
+  };
+});
+
+function Metric({ label, value, note, icon, warning, carregando, erro }) {
   return (
-    <article className={`metrica ${warning ? 'aviso' : ''}`}>
-      <span className="icone-metrica">{icon}</span>
+    <article className={`metrica ${warning ? 'metrica-alerta' : ''} ${erro ? 'metrica-erro' : ''}`}>
+      <span className="icone-metrica" aria-hidden="true">{icon}</span>
       <p>{label}</p>
-      <strong>{value}</strong>
-      <small>{note}</small>
+      <strong>{carregando ? '…' : erro ? '—' : value}</strong>
+      <small>{carregando ? 'Carregando…' : erro ? 'Não foi possível carregar' : note}</small>
     </article>
   );
 }
 
-function CartaoEquipe({ titulo, icone: _icone, itens, carregando, vazioTexto }) {
+function CartaoEquipe({ titulo, itens, carregando, erro, vazioTexto }) {
   return (
     <section className="superficie cartao-equipe">
       <div className="titulo-secao">
@@ -33,11 +94,13 @@ function CartaoEquipe({ titulo, icone: _icone, itens, carregando, vazioTexto }) 
           <p className="titulo-pequeno">Equipe</p>
           <h2>{titulo}</h2>
         </div>
-        <span className="crachá-contagem">{itens.length}</span>
+        <span className="crachá-contagem">{carregando ? '…' : erro ? '—' : itens.length}</span>
       </div>
 
       {carregando ? (
         <div className="conteudo-vazio"><p>Carregando...</p></div>
+      ) : erro ? (
+        <div className="conteudo-vazio"><p>{erro}</p></div>
       ) : itens.length === 0 ? (
         <div className="conteudo-vazio"><p>{vazioTexto}</p></div>
       ) : (
@@ -54,21 +117,19 @@ function CartaoEquipe({ titulo, icone: _icone, itens, carregando, vazioTexto }) 
                   <span className="detalhe">
                     {item.dataNascimento && (
                       <>
-                        Aniversário: <time>{new Date(item.dataNascimento).toLocaleDateString('pt-BR')}</time>
+                        Aniversário: <time>{formatarData(item.dataNascimento)}</time>
                         {' | '}
                       </>
                     )}
-                    {item.diasParaAniversario !== undefined && (
+                    {item.diasParaAniversario !== undefined && item.diasParaAniversario !== null && (
                       <span className={`dias-badge ${ehAniversarioHoje ? 'aniversario-hoje-badge' : ''}`}>
                         {ehAniversarioHoje ? 'Aniversário hoje' : `${item.diasParaAniversario} dias`}
                       </span>
                     )}
                     {item.dataInicio && item.dataFim && (
-                      <>
-                        <span className="ferias-periodo">
-                          {new Date(item.dataInicio).toLocaleDateString('pt-BR')} a {new Date(item.dataFim).toLocaleDateString('pt-BR')}
-                        </span>
-                      </>
+                      <span className="ferias-periodo">
+                        {formatarData(item.dataInicio)} a {formatarData(item.dataFim)}
+                      </span>
                     )}
                   </span>
                 </div>
@@ -81,7 +142,7 @@ function CartaoEquipe({ titulo, icone: _icone, itens, carregando, vazioTexto }) 
   );
 }
 
-function CartaoEstoqueBaixo({ itens, carregando }) {
+function CartaoEstoqueBaixo({ itens, carregando, erro }) {
   return (
     <section className="superficie cartao-estoque-baixo">
       <div className="titulo-secao">
@@ -89,27 +150,27 @@ function CartaoEstoqueBaixo({ itens, carregando }) {
           <p className="titulo-pequeno">Atenção</p>
           <h2>Estoque Baixo</h2>
         </div>
-        <span className="crachá-contagem aviso">{itens.length}</span>
+        <span className="crachá-contagem aviso">{carregando ? '…' : erro ? '—' : itens.length}</span>
       </div>
 
       {carregando ? (
         <div className="conteudo-vazio"><p>Carregando...</p></div>
+      ) : erro ? (
+        <div className="conteudo-vazio"><p>{erro}</p></div>
       ) : itens.length === 0 ? (
         <div className="conteudo-vazio"><p>Todos os produtos estão com estoque adequado.</p></div>
       ) : (
         <ul className="lista-estoque-baixo">
           {itens.map((item) => (
-            <li key={item.produto.id} className="item-estoque-baixo">
+            <li key={item.id} className="item-estoque-baixo">
               <div className="info">
                 <strong>{item.produto.nome}</strong>
-                <span className="detalhe">
-                  SKU: {item.produto.sku}
-                </span>
+                <span className="detalhe">SKU: {item.produto.sku}</span>
               </div>
               <div className="estoque-info">
                 <span className="estoque-atual">{item.estoqueAtual}</span>
                 <span className="estoque-minimo">Mín: {item.produto.estoqueMinimo}</span>
-                <span className="diferenca">Faltam {item.produto.estoqueMinimo - item.estoqueAtual}</span>
+                <span className="diferenca">Faltam {Math.max(0, item.produto.estoqueMinimo - item.estoqueAtual)}</span>
               </div>
             </li>
           ))}
@@ -120,53 +181,98 @@ function CartaoEstoqueBaixo({ itens, carregando }) {
 }
 
 export default function Home() {
+  const [metricas, setMetricas] = useState({
+    produtos: { value: 0, carregando: true, erro: false },
+    estoqueBaixo: { value: 0, carregando: true, erro: false },
+    movimentacoes: { value: 0, carregando: true, erro: false },
+    lojas: { value: 0, carregando: true, erro: false },
+  });
   const [ferias, setFerias] = useState([]);
   const [aniversariantes, setAniversariantes] = useState([]);
   const [estoqueBaixo, setEstoqueBaixo] = useState([]);
   const [carregandoFerias, setCarregandoFerias] = useState(true);
   const [carregandoAniversariantes, setCarregandoAniversariantes] = useState(true);
   const [carregandoEstoqueBaixo, setCarregandoEstoqueBaixo] = useState(true);
+  const [erroFerias, setErroFerias] = useState('');
+  const [erroAniversariantes, setErroAniversariantes] = useState('');
+  const [erroEstoqueBaixo, setErroEstoqueBaixo] = useState('');
 
   useEffect(() => {
-    const buscarFerias = async () => {
+    let ativo = true;
+
+    const carregarLista = async (
+      rota,
+      definirLista,
+      finalizar,
+      definirErro,
+      normalizar = (dados) => dados,
+      limite = 3,
+      aoCarregar = () => {},
+      aoFalhar = () => {}
+    ) => {
       try {
-        const resp = await api.get('/colaboradores/ferias').catch(() => api.get('/api/colaboradores/ferias'));
-        const dados = resp?.data?.content || resp?.data?.dados || resp?.data || [];
-        setFerias(dados.slice(0, 3));
-      } catch {
-        setFerias([]);
+        const resposta = await buscar(rota);
+        if (ativo) {
+          definirLista(normalizar(listarDados(resposta)).slice(0, limite));
+          definirErro('');
+          aoCarregar(resposta);
+        }
+      } catch (erro) {
+        if (ativo) {
+          definirLista([]);
+          definirErro(erro.response?.data?.message || erro.message || 'Não foi possível carregar os dados.');
+          aoFalhar();
+        }
       } finally {
-        setCarregandoFerias(false);
+        if (ativo) finalizar(false);
       }
     };
 
-    const buscarAniversariantes = async () => {
+    const carregarMetrica = async (chave, rota, normalizar = listarDados) => {
       try {
-        const resp = await api.get('/colaboradores/aniversarios-proximos?dias=30').catch(() => api.get('/api/colaboradores/aniversarios-proximos?dias=30'));
-        const dados = resp?.data?.content || resp?.data?.dados || resp?.data || [];
-        setAniversariantes(dados.slice(0, 3));
+        const resposta = await buscar(rota);
+        const quantidade = contarRegistros(resposta, normalizar);
+        if (ativo) {
+          setMetricas((anteriores) => ({
+            ...anteriores,
+            [chave]: { value: quantidade, carregando: false, erro: false },
+          }));
+        }
       } catch {
-        setAniversariantes([]);
-      } finally {
-        setCarregandoAniversariantes(false);
+        if (ativo) {
+          setMetricas((anteriores) => ({
+            ...anteriores,
+            [chave]: { ...anteriores[chave], carregando: false, erro: true },
+          }));
+        }
       }
     };
 
-    const buscarEstoqueBaixo = async () => {
-      try {
-        const resp = await api.get('/produtos/estoque-baixo');
-        const dados = Array.isArray(resp?.data) ? resp.data : resp?.data?.content || resp?.data?.dados || resp?.data || [];
-        setEstoqueBaixo(dados.slice(0, 5));
-      } catch {
-        setEstoqueBaixo([]);
-      } finally {
-        setCarregandoEstoqueBaixo(false);
-      }
-    };
+    carregarLista('/colaboradores/ferias', setFerias, setCarregandoFerias, setErroFerias, (dados) => normalizarEquipe(dados, 'ferias'));
+    carregarLista('/colaboradores/aniversarios-proximos?dias=30', setAniversariantes, setCarregandoAniversariantes, setErroAniversariantes, (dados) => normalizarEquipe(dados, 'aniversario'));
+    carregarLista(
+      '/produtos/estoque-baixo',
+      setEstoqueBaixo,
+      setCarregandoEstoqueBaixo,
+      setErroEstoqueBaixo,
+      normalizarEstoqueBaixo,
+      5,
+      (resposta) => setMetricas((anteriores) => ({
+        ...anteriores,
+        estoqueBaixo: { value: contarRegistros(resposta, listarDados), carregando: false, erro: false },
+      })),
+      () => setMetricas((anteriores) => ({
+        ...anteriores,
+        estoqueBaixo: { ...anteriores.estoqueBaixo, carregando: false, erro: true },
+      }))
+    );
+    carregarMetrica('produtos', '/produtos');
+    carregarMetrica('movimentacoes', '/movimentacoes/historico');
+    carregarMetrica('lojas', '/estabelecimentos');
 
-    buscarFerias();
-    buscarAniversariantes();
-    buscarEstoqueBaixo();
+    return () => {
+      ativo = false;
+    };
   }, []);
 
   return (
@@ -177,31 +283,34 @@ export default function Home() {
           <h1>Dashboard</h1>
           <p>Visão geral da operação do sistema.</p>
         </div>
+        <Link className="primario" to="/historico">Ver movimentações</Link>
       </header>
 
       <div className="grade-metrica">
-        {metrics.map((metric) => (
-          <Metric key={metric.label} {...metric} />
-        ))}
+        <Metric label="Produtos" value={metricas.produtos.value} note="Produtos cadastrados" icon="▦" {...metricas.produtos} />
+        <Metric label="Estoque baixo" value={metricas.estoqueBaixo.value} note="Produtos abaixo do mínimo" icon="!" warning {...metricas.estoqueBaixo} />
+        <Metric label="Movimentações" value={metricas.movimentacoes.value} note="Registros no histórico" icon="⇄" {...metricas.movimentacoes} />
+        <Metric label="Lojas" value={metricas.lojas.value} note="Estabelecimentos cadastrados" icon="⌂" {...metricas.lojas} />
       </div>
 
       <div className="grade-inicio">
         <CartaoEquipe
           titulo="Em férias"
-          icone="🌴"
           itens={ferias}
           carregando={carregandoFerias}
+          erro={erroFerias}
           vazioTexto="Nenhum funcionário em férias no momento."
         />
         <CartaoEstoqueBaixo
           itens={estoqueBaixo}
           carregando={carregandoEstoqueBaixo}
+          erro={erroEstoqueBaixo}
         />
         <CartaoEquipe
           titulo="Aniversariantes"
-          icone="🎂"
           itens={aniversariantes}
           carregando={carregandoAniversariantes}
+          erro={erroAniversariantes}
           vazioTexto="Nenhum aniversário nos próximos 30 dias."
         />
 
@@ -210,9 +319,9 @@ export default function Home() {
           <h2>Atalhos</h2>
 
           <div className="links-rapidos">
-            {quickLinks.map((link) => (
-              <a key={link.label} href={link.to}>{link.label}</a>
-            ))}
+            <Link to="/cadastro/produto">Cadastrar produto</Link>
+            <Link to="/movimentacao">Registrar movimentação</Link>
+            <Link to="/estoque">Consultar estoque</Link>
           </div>
         </aside>
       </div>

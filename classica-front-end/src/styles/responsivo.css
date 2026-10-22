@@ -66,6 +66,7 @@ svg {
 
   .metrica {
     min-width: 0;
+    height: 135px;
     min-height: 135px;
     padding: 15px;
   }
@@ -177,6 +178,7 @@ svg {
   }
 
   .metrica {
+    height: 116px;
     min-height: 116px;
     padding: 12px;
   }

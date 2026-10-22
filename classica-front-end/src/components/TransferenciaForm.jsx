@@ -199,7 +199,7 @@ export default function TransferenciaForm() {
         if (item.produtoId !== produtoId) return item;
         return {
           ...item,
-          quantidade: valor,
+          quantidade,
           subtotal: 0,
         };
       })
@@ -240,6 +240,11 @@ export default function TransferenciaForm() {
 
     for (const item of itens) {
       const saldoDisponivel = obterSaldoDisponivel(Number(item.produtoId));
+      if (Number(item.quantidade) < 1) {
+        setNotice('A quantidade deve ser maior que zero para todos os itens.');
+        setLoading(false);
+        return;
+      }
       if (Number(item.quantidade) > saldoDisponivel) {
         const produto = produtos.find((p) => Number(p.id) === Number(item.produtoId));
         setNotice(`Quantidade de "${produto?.nome || 'produto'}" excede o estoque disponível (${saldoDisponivel}).`);
