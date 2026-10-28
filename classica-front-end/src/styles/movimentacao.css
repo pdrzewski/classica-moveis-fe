@@ -698,6 +698,340 @@
   font-size: 18px;
 }
 
+.superficie-transferencia {
+  max-width: 1080px;
+  padding: 28px 32px;
+}
+
+.form-transferencia {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 20px;
+}
+
+.form-transferencia .topo-acoes {
+  justify-items: end;
+  margin-bottom: -8px;
+}
+
+.form-transferencia .btn-limpar {
+  border-radius: 8px;
+}
+
+.transferencia-cabecalho {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--line);
+}
+
+.transferencia-etiqueta {
+  display: inline-block;
+  margin-bottom: 6px;
+  color: var(--orange-dark);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.transferencia-cabecalho h2 {
+  margin: 0 0 5px;
+  font-size: 20px;
+}
+
+.transferencia-cabecalho p,
+.transferencia-secao-titulo p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.transferencia-etapas {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  flex-shrink: 0;
+  padding: 9px 12px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.transferencia-etapas span {
+  color: var(--orange-dark);
+}
+
+.form-transferencia .transferencia-header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 52px minmax(0, 1fr);
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+}
+
+.form-transferencia .loja-card {
+  display: grid;
+  gap: 11px;
+  min-width: 0;
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #fbfaf7;
+}
+
+.form-transferencia .loja-card.origem {
+  border-top: 3px solid var(--orange);
+}
+
+.form-transferencia .loja-card.destino {
+  border-top: 3px solid var(--green);
+}
+
+.form-transferencia .loja-label {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.form-transferencia .loja-label > span {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: #f4ebdb;
+  color: var(--orange-dark);
+  font-size: 10px;
+}
+
+.form-transferencia .loja-card.destino .loja-label > span {
+  background: #e9f0e2;
+  color: #5e7545;
+}
+
+.form-transferencia .loja-card select,
+.form-transferencia .campo-busca-produto input,
+.form-transferencia .campo-observacao textarea {
+  width: 100%;
+  min-width: 0;
+  padding: 12px 13px;
+  border: 1px solid #dfe2da;
+  border-radius: 8px;
+  outline: none;
+  background: #fff;
+  color: var(--ink);
+  transition: border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.form-transferencia .loja-card select:focus,
+.form-transferencia .campo-busca-produto input:focus,
+.form-transferencia .campo-observacao textarea:focus {
+  border-color: var(--orange);
+  box-shadow: 0 0 0 3px rgba(233, 144, 50, 0.13);
+}
+
+.form-transferencia .loja-info,
+.form-transferencia .loading-indicator {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.form-transferencia .transferencia-seta {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border: 1px solid #f0dfc8;
+  border-radius: 50%;
+  background: #fffaf1;
+  color: var(--orange-dark);
+}
+
+.form-transferencia .transferencia-seta svg {
+  width: 22px;
+  height: 22px;
+}
+
+.form-transferencia .bloco-produtos {
+  display: grid;
+  gap: 12px;
+  margin-top: 0;
+  padding-top: 20px;
+  border-top: 1px solid var(--line);
+}
+
+.transferencia-secao-titulo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.transferencia-secao-titulo label {
+  display: block;
+  margin: 0 0 4px;
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.transferencia-contagem {
+  flex-shrink: 0;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: #f4ebdb;
+  color: var(--orange-dark);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.form-transferencia .linha-selecao-produto {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.form-transferencia .lista-vazia {
+  display: grid;
+  min-height: 84px;
+  place-items: center;
+  margin-top: 0;
+  padding: 16px;
+  border: 1px dashed #d9ddd3;
+  border-radius: 10px;
+  background: #fafaf8;
+  text-align: center;
+}
+
+.form-transferencia .lista-itens {
+  margin-top: 0;
+}
+
+.form-transferencia .item-movimentacao {
+  grid-template-columns: minmax(0, 1fr) 90px 36px;
+  gap: 12px;
+  padding: 13px 14px;
+  border-radius: 10px;
+}
+
+.form-transferencia .item-movimentacao .texto-secundario {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.form-transferencia .quantidade-wrapper input {
+  width: 100% !important;
+  padding: 9px 10px;
+  border-radius: 7px;
+  text-align: center;
+}
+
+.form-transferencia .btn-remover {
+  width: 36px;
+  height: 36px;
+  margin-left: 0 !important;
+  border-radius: 8px;
+}
+
+.form-transferencia .campo-observacao {
+  gap: 8px;
+}
+
+.form-transferencia .campo-observacao label {
+  margin: 0;
+  color: var(--ink);
+  font-size: 13px;
+}
+
+.form-transferencia .campo-observacao textarea {
+  min-height: 88px;
+  resize: vertical;
+}
+
+.form-transferencia > .aviso {
+  margin: 0;
+  border-radius: 8px;
+}
+
+.form-transferencia .rodape-acoes {
+  justify-items: end;
+  margin-top: 0;
+}
+
+.form-transferencia .rodape-acoes .primario {
+  width: auto;
+  min-width: 240px;
+  margin: 0;
+  border-radius: 8px;
+}
+
+@media (max-width: 700px) {
+  .superficie-transferencia {
+    padding: 22px;
+  }
+
+  .form-transferencia .transferencia-header {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .form-transferencia .transferencia-seta {
+    width: 38px;
+    height: 38px;
+    margin: -4px auto;
+    transform: rotate(90deg);
+  }
+}
+
+@media (max-width: 480px) {
+  .superficie-transferencia {
+    padding: 16px;
+  }
+
+  .form-transferencia {
+    gap: 16px;
+  }
+
+  .transferencia-cabecalho {
+    align-items: flex-start;
+  }
+
+  .transferencia-cabecalho p {
+    max-width: 240px;
+    line-height: 1.5;
+  }
+
+  .transferencia-etapas {
+    gap: 6px;
+    padding: 7px 9px;
+    font-size: 10px;
+  }
+
+  .form-transferencia .loja-card {
+    padding: 14px;
+  }
+
+  .form-transferencia .item-movimentacao {
+    grid-template-columns: minmax(0, 1fr) 72px 32px;
+    gap: 8px;
+    padding: 10px;
+  }
+
+  .form-transferencia .btn-remover {
+    width: 32px;
+    height: 32px;
+  }
+
+  .form-transferencia .rodape-acoes .primario {
+    width: 100%;
+  }
+}
+
 .detalhes-compra-cabecalho > span {
   color: var(--muted);
   font-size: 13px;

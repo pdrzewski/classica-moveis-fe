@@ -287,7 +287,7 @@ export default function TransferenciaForm() {
   const lojaDestino = lojas.find((l) => String(l.id) === lojaDestinoId);
 
   return (
-    <div className="superficie superficie-formulario">
+    <div className="superficie superficie-formulario superficie-transferencia">
       <form onSubmit={handleSubmit} className="form-movimentacao form-transferencia">
         <div className="acoes-movimentacao topo-acoes">
           <button type="button" className="btn-limpar" onClick={limparFormulario}>
@@ -295,9 +295,18 @@ export default function TransferenciaForm() {
           </button>
         </div>
 
+        <div className="transferencia-cabecalho">
+          <div>
+            <span className="transferencia-etiqueta">Movimentação interna</span>
+            <h2>Defina o percurso</h2>
+            <p>Escolha as lojas de origem e destino para movimentar os produtos.</p>
+          </div>
+          <span className="transferencia-etapas">01 <span>→</span> 02</span>
+        </div>
+
         <div className="transferencia-header">
           <div className="loja-card origem">
-            <span className="loja-label">Origem</span>
+            <span className="loja-label"><span>01</span> Loja de origem</span>
             <select
               value={lojaOrigemId}
               onChange={(e) => setLojaOrigemId(e.target.value)}
@@ -312,7 +321,7 @@ export default function TransferenciaForm() {
               ))}
             </select>
             {carregandoEstoque && <span className="loading-indicator">Carregando estoque...</span>}
-            {lojaOrigem && !carregandoEstoque && <span className="loja-info">{lojaOrigem.nome || lojaOrigem.titulo}</span>}
+            {lojaOrigem && !carregandoEstoque && <span className="loja-info">O estoque desta loja será validado.</span>}
           </div>
 
           <div className="transferencia-seta" aria-hidden="true">
@@ -322,7 +331,7 @@ export default function TransferenciaForm() {
           </div>
 
           <div className="loja-card destino">
-            <span className="loja-label">Destino</span>
+            <span className="loja-label"><span>02</span> Loja de destino</span>
             <select
               value={lojaDestinoId}
               onChange={(e) => setLojaDestinoId(e.target.value)}
@@ -335,15 +344,22 @@ export default function TransferenciaForm() {
                 </option>
               ))}
             </select>
-            {lojaDestino && <span className="loja-info">{lojaDestino.nome || lojaDestino.titulo}</span>}
+            {lojaDestino && <span className="loja-info">Receberá os produtos selecionados.</span>}
           </div>
         </div>
 
         <div className="campo bloco-produtos">
-          <label>Produtos</label>
+          <div className="transferencia-secao-titulo">
+            <div>
+              <label htmlFor="transferencia-busca-produto">Produtos para transferir</label>
+              <p>Pesquise pelo nome, SKU ou código de barras.</p>
+            </div>
+            <span className="transferencia-contagem">{itens.length} {itens.length === 1 ? 'produto' : 'produtos'}</span>
+          </div>
           <div className="linha-selecao-produto">
             <div className="campo-busca-produto">
               <input
+                id="transferencia-busca-produto"
                 value={produtoBusca}
                 onChange={(event) => setProdutoBusca(event.target.value)}
                 onKeyDown={(event) => {
@@ -396,7 +412,7 @@ export default function TransferenciaForm() {
           </div>
 
           {itens.length === 0 ? (
-            <div className="lista-vazia">Nenhum produto selecionado</div>
+            <div className="lista-vazia">Nenhum produto adicionado. Pesquise acima para começar a transferência.</div>
           ) : (
             <div className="lista-itens">
               {itens.map((item) => {
