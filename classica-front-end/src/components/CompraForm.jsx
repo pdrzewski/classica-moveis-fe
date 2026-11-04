@@ -213,6 +213,15 @@ export default function CompraForm() {
   };
 
   const alterarQuantidade = (produtoId, quantidade) => {
+    if (quantidade === '') {
+      setNotice('');
+      setItens((prev) =>
+        prev.map((item) => item.produtoId === produtoId
+          ? { ...item, quantidade: '', subtotal: 0 }
+          : item)
+      );
+      return;
+    }
     const valor = Number(quantidade);
     if (isNaN(valor) || valor <= 0) {
       setNotice('Quantidade deve ser maior que zero.');
@@ -228,19 +237,27 @@ export default function CompraForm() {
       prev.map((item) => {
         if (item.produtoId !== produtoId) return item;
         const subtotal = valor * Number(item.valorUnitario || 0) - Number(item.desconto || 0);
-        return { ...item, quantidade: valor, subtotal };
+        return { ...item, quantidade, subtotal };
       })
     );
   };
 
   const alterarValorUnitario = (produtoId, valorUnitario) => {
+    if (valorUnitario === '') {
+      setItens((prev) =>
+        prev.map((item) => item.produtoId === produtoId
+          ? { ...item, valorUnitario: '', subtotal: 0 }
+          : item)
+      );
+      return;
+    }
     const valor = Number(valorUnitario);
     if (isNaN(valor) || valor < 0) return;
     setItens((prev) =>
       prev.map((item) => {
         if (item.produtoId !== produtoId) return item;
         const subtotal = valor * Number(item.quantidade || 0) - Number(item.desconto || 0);
-        return { ...item, valorUnitario: valor, subtotal };
+        return { ...item, valorUnitario, subtotal };
       })
     );
   };

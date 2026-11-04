@@ -774,7 +774,7 @@ export default function VendaForm() {
         .filter(([id]) => Number(id) !== Number(lojaId))
         .reduce((total, [, quantidade]) => total + Number(quantidade || 0), 0);
       const maximo = Math.max(0, Math.min(saldoMaximo, faltante - totalOutrasLojas));
-      const quantidade = valor === '' ? 0 : Math.max(0, Math.min(Number(valor) || 0, maximo));
+      const quantidade = valor === '' ? '' : Math.max(0, Math.min(Number(valor) || 0, maximo));
       return { ...atuais, [produtoId]: { ...alocacoes, [lojaId]: quantidade } };
     });
   };
@@ -1207,7 +1207,7 @@ export default function VendaForm() {
                         <input
                           type="text"
                           inputMode="numeric"
-                          value={alocacoes[idDaLoja(loja)] || 0}
+                          value={alocacoes[idDaLoja(loja)] ?? ''}
                           disabled={disponivel <= 0}
                           onChange={(event) => alterarQuantidadeOrigem(item.produtoId, idDaLoja(loja), event.target.value, disponivel, item.faltante)}
                           onFocus={selecionarConteudoInput}

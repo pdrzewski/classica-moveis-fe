@@ -537,7 +537,7 @@ export default function MovimentacaoForm({ tipoInicial = 'COMPRA', tipoLabel = t
 
         return {
           ...item,
-          quantidade: valor,
+          quantidade,
           valorUnitario: unitario,
           subtotal,
         };
@@ -704,7 +704,7 @@ export default function MovimentacaoForm({ tipoInicial = 'COMPRA', tipoLabel = t
         .filter(([id]) => Number(id) !== Number(lojaId))
         .reduce((total, [, quantidade]) => total + Number(quantidade || 0), 0);
       const maximoPermitido = Math.max(0, Math.min(saldoMaximo, faltante - totalOutrasLojas));
-      const quantidade = valor === '' ? 0 : Math.max(0, Math.min(Number(valor) || 0, maximoPermitido));
+      const quantidade = valor === '' ? '' : Math.max(0, Math.min(Number(valor) || 0, maximoPermitido));
 
       return { ...atuais, [produtoId]: { ...produtoAtual, [lojaId]: quantidade } };
     });
@@ -766,6 +766,11 @@ export default function MovimentacaoForm({ tipoInicial = 'COMPRA', tipoLabel = t
 
     if (transferencia && (!lojaOrigemId || !lojaDestinoId || lojaOrigemId === lojaDestinoId)) {
       setNotice('Selecione duas lojas diferentes para realizar a transferência.');
+      return;
+    }
+
+    if (itens.some((item) => Number(item.quantidade) < 1)) {
+      setNotice('A quantidade deve ser maior que zero para todos os itens.');
       return;
     }
 
@@ -1007,6 +1012,10 @@ export default function MovimentacaoForm({ tipoInicial = 'COMPRA', tipoLabel = t
                       min="1"
                       value={String(item.quantidade)}
                       onChange={(event) => alterarQuantidade(item.produtoId, event.target.value)}
+                      onBlur={(event) => {
+                        const quantidade = event.target.value;
+                        if (quantidade === '' || Number(quantidade) < 1) alterarQuantidade(item.produtoId, 1);
+                      }}
                     />
                   <button type="button" className="btn-remover" onClick={() => removerProduto(item.produtoId)}>
                     ×
@@ -1109,7 +1118,7 @@ export default function MovimentacaoForm({ tipoInicial = 'COMPRA', tipoLabel = t
                           min="0"
                           max={disponivel}
                           step="1"
-                          value={alocacoes[idDaLoja(loja)] || 0}
+                          value={alocacoes[idDaLoja(loja)] ?? ''}
                           disabled={disponivel <= 0}
                           onChange={(event) => alterarQuantidadeOrigem(
                             item.produtoId,

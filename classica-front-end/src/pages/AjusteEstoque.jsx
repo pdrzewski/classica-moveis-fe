@@ -36,7 +36,7 @@ export default function AjusteEstoque() {
   const [observacao, setObservacao] = useState('');
   const [buscaProduto, setBuscaProduto] = useState('');
   const [produtoSelecionadoId, setProdutoSelecionadoId] = useState('');
-  const [quantidade, setQuantidade] = useState(1);
+  const [quantidade, setQuantidade] = useState('1');
   const [itens, setItens] = useState([]);
   const [carregando, setCarregando] = useState(false);
   const [salvando, setSalvando] = useState(false);
@@ -114,15 +114,13 @@ export default function AjusteEstoque() {
     setBuscaProduto(produto.nome);
     setProdutoSelecionadoId(String(produto.id));
     setProdutosSugeridos([]);
-    setQuantidade(1);
+    setQuantidade('1');
   };
 
-  const adicionarItem = (tipo) => {
-    const produto = produtos.find((p) => String(p.id) === produtoSelecionadoId)
-      || produtos.find((p) => [p.nome, p.sku, p.codigoBarras, p.codigo]
-        .some((campo) => normalizarBusca(campo) === normalizarBusca(buscaProduto)));
+  const selecionarTipo = (tipo) => {
+    const produto = produtos.find((p) => String(p.id) === produtoSelecionadoId);
     if (!produto) {
-      setNotice('Selecione um produto válido da lista.');
+      setNotice('Selecione um produto da lista antes de escolher o tipo de ajuste.');
       return;
     }
     const qtd = Number(quantidade);
@@ -140,7 +138,7 @@ export default function AjusteEstoque() {
       if (existente) {
         return prev.map((i) =>
           i.produtoId === produto.id && i.tipo === tipo
-            ? { ...i, quantidade: i.quantidade + qtd }
+            ? { ...i, quantidade: qtd }
             : i
         );
       }
@@ -159,7 +157,7 @@ export default function AjusteEstoque() {
 
     setBuscaProduto('');
     setProdutoSelecionadoId('');
-    setQuantidade(1);
+    setQuantidade('1');
     setNotice('');
   };
 
@@ -175,7 +173,7 @@ export default function AjusteEstoque() {
     setObservacao('');
     setBuscaProduto('');
     setProdutoSelecionadoId('');
-    setQuantidade(1);
+    setQuantidade('1');
     setItens([]);
     setNotice('');
     setSucesso(false);
@@ -265,7 +263,7 @@ export default function AjusteEstoque() {
     setObservacao('');
     setBuscaProduto('');
     setProdutoSelecionadoId('');
-    setQuantidade(1);
+    setQuantidade('1');
     setItens([]);
     setSalvando(false);
   };
@@ -314,7 +312,7 @@ export default function AjusteEstoque() {
           </div>
 
           <div className="campo bloco-busca-produto">
-            <label>Adicionar item ao ajuste</label>
+            <label>Produto do ajuste</label>
             <div className="linha-busca-produto">
               <div className="campo-busca-produto campo-busca-produto-ajuste">
                 <input
@@ -367,16 +365,28 @@ export default function AjusteEstoque() {
                   min="1"
                   step="1"
                   value={quantidade}
-                  onChange={(e) => setQuantidade(Number(e.target.value) || 1)}
+                  onChange={(e) => setQuantidade(e.target.value)}
                   className="input-quantidade"
                 />
               </div>
-              <div className="acoes-adicionar-item">
-                <button type="button" className="btn-entrada" onClick={() => adicionarItem('ENTRADA')} title="Entrada de produto">
+              <div className="acoes-tipo-ajuste">
+                <button
+                  type="button"
+                  className="btn-entrada"
+                  onClick={() => selecionarTipo('ENTRADA')}
+                  title="Entrada de produto"
+                  disabled={!produtoSelecionadoId}
+                >
                   <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
                   <span>Entrada de produto</span>
                 </button>
-                <button type="button" className="btn-saida" onClick={() => adicionarItem('SAIDA')} title="Saída de produto">
+                <button
+                  type="button"
+                  className="btn-saida"
+                  onClick={() => selecionarTipo('SAIDA')}
+                  title="Saída de produto"
+                  disabled={!produtoSelecionadoId}
+                >
                   <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"/></svg>
                   <span>Saída de produto</span>
                 </button>
