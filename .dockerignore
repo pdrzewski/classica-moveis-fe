@@ -1,4 +1,6 @@
 classica-front-end/node_modules
 classica-front-end/build
 classica-front-end/dist
+node_modules
+dist
 .git
