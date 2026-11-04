@@ -684,16 +684,32 @@
 }
 
 .dropdown-item {
+  padding: 0;
+  transition: background 0.15s ease;
+}
+
+.dropdown-item-botao {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
+  width: 100%;
   padding: 12px 16px;
-  transition: background 0.15s ease;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
 }
 
-.dropdown-item:hover {
+.dropdown-item-botao:hover,
+.dropdown-item-botao:focus-visible {
   background: #faf9f5;
+}
+
+.dropdown-item-botao:focus-visible {
+  outline: 2px solid var(--orange);
+  outline-offset: -2px;
 }
 
 .dropdown-item-info {
@@ -744,6 +760,14 @@
 .dropdown-item-estoque .estoque-minimo {
   font-size: 11px;
   color: var(--muted);
+}
+
+.dropdown-item-mensagem {
+  margin: 0;
+  padding: 0 16px 12px;
+  color: var(--ink);
+  font-size: 12px;
+  line-height: 1.5;
 }
 
 .dropdown-rodape {

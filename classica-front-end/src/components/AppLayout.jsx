@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import logo from '../assets/Clássica(1).png';
 import api from '../services/Api';
@@ -28,8 +28,11 @@ export default function AppLayout() {
   const [movimentacaoOpen, setMovimentacaoOpen] = useState(true);
   const tiposMovimentacao = movimentacaoItems;
   const [notificacoes, setNotificacoes] = useState([]);
+  const [notificacaoSelecionadaId, setNotificacaoSelecionadaId] = useState(null);
   const [notificacoesAbertas, setNotificacoesAbertas] = useState(false);
   const [carregandoNotificacoes, setCarregandoNotificacoes] = useState(false);
+  const [erroNotificacoes, setErroNotificacoes] = useState('');
+  const carregandoNotificacoesRef = useRef(false);
   const notificacoesRef = useRef(null);
   const location = useLocation();
   const current = location.pathname.split('/').filter(Boolean).pop();
@@ -41,25 +44,62 @@ export default function AppLayout() {
   };
   const title = labels[current] || 'Início';
 
-  const carregarNotificacoes = async () => {
-    if (carregandoNotificacoes) return;
+  const carregarNotificacoes = useCallback(async () => {
+    if (carregandoNotificacoesRef.current) return;
+    carregandoNotificacoesRef.current = true;
     setCarregandoNotificacoes(true);
+    setErroNotificacoes('');
     try {
-      const resp = await api.get('/produtos/estoque-baixo');
-      const dados = Array.isArray(resp?.data) ? resp.data : resp?.data?.content || resp?.data?.dados || resp?.data || [];
-      setNotificacoes(dados.slice(0, 10));
-    } catch {
+      let resp;
+      try {
+        resp = await api.get('/produtos/estoque-baixo');
+      } catch (erro) {
+        if (erro.response?.status !== 404) throw erro;
+        resp = await api.get('/api/produtos/estoque-baixo');
+      }
+
+      const resposta = resp?.data;
+      const dados = Array.isArray(resposta)
+        ? resposta
+        : resposta?.content || resposta?.dados || resposta?.items || resposta?.results || resposta?.data || [];
+      const normalizadas = (Array.isArray(dados) ? dados : []).slice(0, 10).map((item, indice) => {
+        const produto = item?.produto || item || {};
+        const estoqueAtual = Number(item?.estoqueAtual ?? item?.saldoDisponivel ?? item?.quantidade ?? item?.saldo ?? 0);
+        const estoqueMinimo = Number(produto.estoqueMinimo ?? produto.estoque_minimo ?? 0);
+        const nome = produto.nome || produto.produtoNome || 'Produto sem nome';
+        const diferenca = Math.max(0, estoqueMinimo - estoqueAtual);
+        const mensagemRecebida = item?.mensagem || item?.message;
+        const mensagem = typeof mensagemRecebida === 'string' && mensagemRecebida.trim()
+          ? mensagemRecebida
+          : `${nome} está com estoque baixo. Estoque atual: ${estoqueAtual}; mínimo: ${estoqueMinimo}; faltam ${diferenca} unidades.`;
+
+        return {
+          id: item?.id ?? produto.id ?? produto.produtoId ?? item?.produtoId ?? `estoque-baixo-${indice}`,
+          nome,
+          sku: produto.sku || produto.codigo || produto.codigoBarras || produto.codigo_barras || '—',
+          estoqueAtual,
+          estoqueMinimo,
+          mensagem,
+        };
+      });
+
+      setNotificacoes(normalizadas);
+    } catch (erro) {
       setNotificacoes([]);
+      setErroNotificacoes(
+        erro.response?.data?.message || erro.message || 'Não foi possível carregar as notificações.'
+      );
     } finally {
+      carregandoNotificacoesRef.current = false;
       setCarregandoNotificacoes(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     carregarNotificacoes();
     const interval = setInterval(carregarNotificacoes, 60000);
     return () => clearInterval(interval);
-  }, []);
+  }, [carregarNotificacoes]);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -127,13 +167,15 @@ const IconShoppingBag = () => <svg width="20" height="20" viewBox="0 0 24 24" fi
               className={`btn-notificacoes ${notificacoes.length > 0 ? 'tem-notificacao' : ''}`}
               aria-label="Notificações" 
               title="Notificações"
+              aria-expanded={notificacoesAbertas}
+              aria-haspopup="true"
               onClick={() => setNotificacoesAbertas((prev) => !prev)}
             >
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
               {notificacoes.length > 0 && <span className="badge-notificacao">{notificacoes.length > 9 ? '9+' : notificacoes.length}</span>}
             </button>
             {notificacoesAbertas && (
-              <div className="dropdown-notificacoes" role="menu">
+              <div className="dropdown-notificacoes" role="region" aria-label="Alertas de Estoque">
                 <div className="dropdown-cabecalho">
                   <h3>Alertas de Estoque</h3>
                   <button className="btn-atualizar" onClick={carregarNotificacoes} disabled={carregandoNotificacoes} aria-label="Atualizar">
@@ -143,27 +185,41 @@ const IconShoppingBag = () => <svg width="20" height="20" viewBox="0 0 24 24" fi
                 <div className="dropdown-conteudo">
                   {carregandoNotificacoes ? (
                     <div className="dropdown-carregando">Carregando...</div>
+                  ) : erroNotificacoes ? (
+                    <div className="dropdown-vazio" role="alert">{erroNotificacoes}</div>
                   ) : notificacoes.length === 0 ? (
                     <div className="dropdown-vazio">Nenhum produto com estoque baixo.</div>
                   ) : (
                     <ul className="dropdown-lista" role="list">
                       {notificacoes.map((item) => (
-                        <li key={item.produto.id} className="dropdown-item" role="menuitem">
-                          <div className="dropdown-item-info">
-                            <strong>{item.produto.nome}</strong>
-                            <span>SKU: {item.produto.sku}</span>
-                          </div>
-                          <div className="dropdown-item-estoque">
-                            <span className="estoque-atual">{item.estoqueAtual}</span>
-                            <span className="estoque-minimo">Mín: {item.produto.estoqueMinimo}</span>
-                          </div>
+                        <li key={item.id} className="dropdown-item">
+                          <button
+                            type="button"
+                            className="dropdown-item-botao"
+                            aria-expanded={notificacaoSelecionadaId === item.id}
+                            onClick={() => setNotificacaoSelecionadaId((idAtual) => (
+                              idAtual === item.id ? null : item.id
+                            ))}
+                          >
+                            <span className="dropdown-item-info">
+                              <strong>{item.nome}</strong>
+                              <span>SKU: {item.sku}</span>
+                            </span>
+                            <span className="dropdown-item-estoque">
+                              <span className="estoque-atual">{item.estoqueAtual}</span>
+                              <span className="estoque-minimo">Mín: {item.estoqueMinimo}</span>
+                            </span>
+                          </button>
+                          {notificacaoSelecionadaId === item.id && (
+                            <p className="dropdown-item-mensagem" role="status">{item.mensagem}</p>
+                          )}
                         </li>
                       ))}
                     </ul>
                   )}
                 </div>
                 <div className="dropdown-rodape">
-                  <a href="/estoque" onClick={() => setNotificacoesAbertas(false)}>Ver todos no Estoque</a>
+                  <NavLink to="/estoque" onClick={() => setNotificacoesAbertas(false)}>Ver todos no Estoque</NavLink>
                 </div>
               </div>
             )}

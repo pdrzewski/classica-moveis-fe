@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import api from '../services/Api';
 import { useAuth } from '../context/AuthContext';
 
@@ -145,6 +145,7 @@ export default function VendaForm() {
   const [buscandoCepCliente, setBuscandoCepCliente] = useState(false);
   const [erroCliente, setErroCliente] = useState('');
   const consultaClienteAtual = useRef(0);
+  const buscaClientesAtual = useRef(0);
   const lojaMatriz = identificarMatriz(lojas);
   const colaboradorSelecionado = colaboradores.find((colaborador) => (
     Number(idDoColaborador(colaborador)) === Number(colaboradorSelecionadoId)
@@ -184,21 +185,25 @@ export default function VendaForm() {
     }
   };
 
-  const buscarClientes = async (nome) => {
-    if (!nome.trim() || nome.trim().length < 2) {
+  const buscarClientes = useCallback(async (nome) => {
+    const consultaId = ++buscaClientesAtual.current;
+    if (clienteSelecionado || nome.trim().length < 2) {
       setClientesSugeridos([]);
+      setBuscandoClientes(false);
       return;
     }
     setBuscandoClientes(true);
     try {
       const resposta = await api.get(`/clientes/nome/${encodeURIComponent(nome.trim())}`).catch(() => api.get(`/api/clientes/nome/${encodeURIComponent(nome.trim())}`));
-      setClientesSugeridos(listarDados(resposta));
+      if (consultaId === buscaClientesAtual.current) {
+        setClientesSugeridos(listarDados(resposta));
+      }
     } catch {
-      setClientesSugeridos([]);
+      if (consultaId === buscaClientesAtual.current) setClientesSugeridos([]);
     } finally {
-      setBuscandoClientes(false);
+      if (consultaId === buscaClientesAtual.current) setBuscandoClientes(false);
     }
-  };
+  }, [clienteSelecionado]);
 
   const buscarEstoqueLojas = async (lojasCarregadas) => {
     setCarregandoEstoque(true);
@@ -278,11 +283,12 @@ export default function VendaForm() {
   }, [produtoBusca]);
 
   useEffect(() => {
+    if (clienteSelecionado) return undefined;
     const timeout = setTimeout(() => {
       buscarClientes(clienteBusca);
     }, 300);
     return () => clearTimeout(timeout);
-  }, [clienteBusca]);
+  }, [buscarClientes, clienteBusca, clienteSelecionado]);
 
   const obterSaldoDisponivel = (produtoId) => {
     return estoqueOrigem[Number(produtoId)] || 0;
@@ -459,14 +465,27 @@ export default function VendaForm() {
   };
 
   const selecionarCliente = (cliente) => {
+    buscaClientesAtual.current += 1;
+    setBuscandoClientes(false);
     setClienteSelecionado(cliente);
     setClienteBusca(cliente.nome || '');
     setClientesSugeridos([]);
   };
 
   const limparCliente = () => {
+    buscaClientesAtual.current += 1;
+    setBuscandoClientes(false);
     setClienteSelecionado(null);
     setClienteBusca('');
+    setClientesSugeridos([]);
+  };
+
+  const alterarBuscaCliente = (valor) => {
+    buscaClientesAtual.current += 1;
+    setBuscandoClientes(false);
+    setClienteSelecionado(null);
+    setClienteBusca(valor);
+    setClientesSugeridos([]);
   };
 
   const adicionarProduto = (produtoInformado = null) => {
@@ -856,8 +875,10 @@ export default function VendaForm() {
               <input
                 type="text"
                 value={clienteBusca}
-                onChange={(e) => setClienteBusca(e.target.value)}
-                onFocus={() => clienteBusca && buscarClientes(clienteBusca)}
+                onChange={(e) => alterarBuscaCliente(e.target.value)}
+                onFocus={() => {
+                  if (!clienteSelecionado && clienteBusca.trim().length >= 2) buscarClientes(clienteBusca);
+                }}
                 placeholder={clienteSelecionado ? 'Cliente selecionado' : 'Digite o nome do cliente (mín. 2 letras)'}
                 disabled={buscandoClientes}
                 autoComplete="off"
@@ -869,7 +890,7 @@ export default function VendaForm() {
                 </button>
               )}
               {buscandoClientes && <span className="indicador-busca-cliente" role="status">Buscando...</span>}
-              {clientesSugeridos.length > 0 && (
+              {!clienteSelecionado && clienteBusca.trim().length >= 2 && clientesSugeridos.length > 0 && (
                 <div className="lista-sugestoes-clientes" role="listbox" aria-label="Clientes sugeridos">
                   {clientesSugeridos.map((cliente) => (
                     <button

@@ -185,6 +185,8 @@ export default function MovimentacaoForm({ tipoInicial = 'COMPRA', tipoLabel = t
 
   const selecionarClienteVenda = (cliente) => {
     const id = cliente.id || cliente.clienteId || cliente.cliente_id;
+    buscaClientesAtual.current += 1;
+    setBuscandoClientes(false);
     setClientes((listaAtual) => [
       cliente,
       ...listaAtual.filter((item) => Number(item.id || item.clienteId || item.cliente_id) !== Number(id)),
@@ -202,9 +204,11 @@ export default function MovimentacaoForm({ tipoInicial = 'COMPRA', tipoLabel = t
   };
 
   const alterarBuscaClienteVenda = (valor) => {
+    buscaClientesAtual.current += 1;
+    setBuscandoClientes(false);
     setClienteBusca(valor);
     setClienteId('');
-    if (valor.trim().length < 2) setClientesSugeridos([]);
+    setClientesSugeridos([]);
   };
 
   const buscarClientePorDocumento = async (documentoInformado = clienteForm.documento) => {
