@@ -16,6 +16,11 @@
   color: #aa594b;
 }
 
+.etiqueta-estoque.negativo {
+  background: #f7e2dd;
+  color: #9c2f25;
+}
+
 .camada-modal {
   position: fixed;
   inset: 0;

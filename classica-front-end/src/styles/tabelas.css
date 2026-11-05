@@ -150,6 +150,75 @@ tbody tr:hover {
   font-weight: 700;
 }
 
+.produto-estoque-detalhes {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--ink);
+  font-weight: 700;
+  text-align: left;
+  cursor: pointer;
+}
+
+.produto-estoque-detalhes:hover,
+.produto-estoque-detalhes:focus-visible {
+  color: var(--orange-dark);
+  text-decoration: underline;
+}
+
+.saldo-negativo {
+  color: #9c2f25;
+}
+
+.estoque-produto-camada {
+  z-index: 320;
+}
+
+.cartao-modal.estoque-produto-modal {
+  position: relative;
+  width: min(720px, 100%);
+  max-width: 720px;
+  padding: 28px;
+}
+
+.cartao-modal.estoque-produto-modal h2 {
+  margin: 0 48px 20px 0;
+}
+
+.estoque-produto-modal .detalhes-grid {
+  margin-bottom: 20px;
+}
+
+.estoque-produto-lojas {
+  display: grid;
+  gap: 8px;
+}
+
+.estoque-produto-lojas h3 {
+  margin: 0 0 2px;
+  font-size: 14px;
+}
+
+.estoque-produto-lojas > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  background: #fff;
+  font-size: 13px;
+}
+
+.estoque-produto-explicacao {
+  margin: 4px 0 0;
+  padding: 10px 12px;
+  border-radius: 6px;
+  background: #f7e2dd;
+  color: #822d25;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
 .acoes-funcionario-bar {
   display: flex;
   gap: 8px;
