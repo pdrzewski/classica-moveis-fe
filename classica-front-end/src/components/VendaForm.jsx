@@ -722,16 +722,12 @@ export default function VendaForm() {
       for (const [indice, { loja, itens: itensDaLoja, pagamentos: pagamentosDaOrigem }] of gruposComPagamentos.entries()) {
         const clienteId = clienteSelecionado ? Number(clienteSelecionado.id || clienteSelecionado.clienteId || clienteSelecionado.cliente_id) : null;
         const colaboradorId = Number(colaboradorSelecionadoId || 0);
-        const valorFrete = indice === 0 ? paraNumero(frete) : 0;
-        const valorItens = itensDaLoja.reduce((total, item) => (
-          total + (paraNumero(item.valorUnitario) * paraNumero(item.quantidade)) - paraNumero(item.desconto)
-        ), 0);
+        const freteDaOrigem = indice === 0 ? paraNumero(frete) : 0;
         const payload = {
           tipoMovimentacao: 'VENDA',
           pagamentos: pagamentosDaOrigem,
           observacao: observacao || 'Venda de produto',
-          valorFrete,
-          valorTotal: Number((valorItens + valorFrete).toFixed(2)),
+          frete: freteDaOrigem,
           estabelecimentoOrigemId: Number(idDaLoja(loja)),
           estabelecimentoDestinoId: null,
           clienteId: Number.isFinite(clienteId) ? clienteId : null,
