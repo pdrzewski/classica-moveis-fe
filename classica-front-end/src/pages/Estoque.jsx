@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import api from '../services/Api';
 
 const listarDados = (resposta) => {
@@ -17,13 +17,22 @@ const buscar = async (rota) => {
   }
 };
 
-const obterSaldo = (produto) => Number(
-  produto?.saldoDisponivel ?? produto?.quantidade ?? produto?.saldo ?? produto?.estoqueAtual ?? 0
-);
+const obterSaldo = (produto) => {
+  const saldo = Number(
+    produto?.saldoDisponivel ?? produto?.quantidade ?? produto?.saldo ?? produto?.estoqueAtual ?? 0
+  );
+  return Number.isFinite(saldo) ? Math.max(0, saldo) : 0;
+};
 const normalizarProdutoEstoque = (produto) => (
   produto?.produto && typeof produto.produto === 'object'
     ? { ...produto.produto, ...produto }
     : produto
+);
+const idDoProduto = (produto) => produto?.produtoId ?? produto?.id;
+const nomeDaReferencia = (referencia) => (
+  typeof referencia === 'object' && referencia
+    ? valorDo(referencia, 'nome', 'titulo', 'descricao', 'categoria', 'razaoSocial')
+    : typeof referencia === 'string' ? referencia : undefined
 );
 const formatarQuantidade = (quantidade) => Number(quantidade).toLocaleString('pt-BR', {
   maximumFractionDigits: 2,
@@ -35,7 +44,7 @@ const nomeRelacionado = (valor) => {
   if (valor && typeof valor === 'object') {
     return valorDo(valor, 'nome', 'titulo', 'descricao', 'categoria', 'razaoSocial') || '—';
   }
-  return valor ?? '—';
+  return typeof valor === 'string' ? valor : '—';
 };
 const formatarMoeda = (valor) => {
   const numero = Number(valor);
@@ -45,7 +54,6 @@ const formatarMoeda = (valor) => {
 };
 
 const statusDoEstoque = (saldo, minimo) => {
-  if (saldo < 0) return ['Saldo insuficiente', 'negativo'];
   if (saldo <= 0) return ['Esgotado', 'vazio'];
   if (saldo <= minimo) return ['Estoque baixo', 'baixo'];
   return ['Disponível', ''];
@@ -59,6 +67,10 @@ export default function Estoque() {
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState('');
   const [produtoSelecionado, setProdutoSelecionado] = useState(null);
+  const [catalogoProdutos, setCatalogoProdutos] = useState([]);
+  const [categorias, setCategorias] = useState([]);
+  const [fornecedores, setFornecedores] = useState([]);
+  const [erroReferencias, setErroReferencias] = useState('');
 
   useEffect(() => {
     if (!produtoSelecionado) return undefined;
@@ -68,6 +80,66 @@ export default function Estoque() {
     window.addEventListener('keydown', fecharComEscape);
     return () => window.removeEventListener('keydown', fecharComEscape);
   }, [produtoSelecionado]);
+
+  useEffect(() => {
+    const carregarCatalogos = async () => {
+      const resultados = await Promise.allSettled([
+        buscar('/produtos'),
+        buscar('/categorias'),
+        buscar('/fornecedores'),
+      ]);
+      const [resultadoProdutos, resultadoCategorias, resultadoFornecedores] = resultados;
+
+      if (resultadoProdutos.status === 'fulfilled') {
+        setCatalogoProdutos(listarDados(resultadoProdutos.value));
+      }
+      if (resultadoCategorias.status === 'fulfilled') {
+        setCategorias(listarDados(resultadoCategorias.value));
+      }
+      if (resultadoFornecedores.status === 'fulfilled') {
+        setFornecedores(listarDados(resultadoFornecedores.value));
+      }
+
+      const falhas = resultados.filter((resultado) => resultado.status === 'rejected').length;
+      setErroReferencias(falhas
+        ? 'Alguns dados cadastrais não puderam ser carregados. Tente atualizar a página.'
+        : '');
+    };
+    carregarCatalogos();
+  }, []);
+
+  const enriquecerProduto = useCallback((registro) => {
+    const estoqueProduto = normalizarProdutoEstoque(registro);
+    const idProduto = idDoProduto(estoqueProduto);
+    const produtoCatalogo = catalogoProdutos.find((produto) => (
+      String(idDoProduto(produto)) === String(idProduto)
+    ));
+    const produto = { ...produtoCatalogo, ...estoqueProduto };
+
+    const fornecedorExistente = produto.fornecedor;
+    const fornecedorId = valorDo(produto, 'fornecedorId', 'fornecedor_id')
+      ?? valorDo(fornecedorExistente, 'id', 'fornecedorId', 'fornecedor_id')
+      ?? (typeof fornecedorExistente === 'number' ? fornecedorExistente : undefined);
+    const categoriaExistente = produto.categoria;
+    const categoriaId = valorDo(produto, 'categoriaId', 'categoria_id')
+      ?? valorDo(categoriaExistente, 'id', 'categoriaId', 'categoria_id')
+      ?? (typeof categoriaExistente === 'number' ? categoriaExistente : undefined);
+
+    const fornecedor = nomeDaReferencia(fornecedorExistente)
+      ? fornecedorExistente
+      : fornecedores.find((item) => String(item.id ?? item.fornecedorId ?? item.fornecedor_id) === String(fornecedorId))
+        || fornecedorExistente;
+    const categoria = nomeDaReferencia(categoriaExistente)
+      ? categoriaExistente
+      : categorias.find((item) => String(item.id ?? item.categoriaId ?? item.categoria_id) === String(categoriaId))
+        || categoriaExistente;
+
+    return {
+      ...produto,
+      fornecedor,
+      categoria,
+    };
+  }, [catalogoProdutos, categorias, fornecedores]);
 
   useEffect(() => {
     const carregarLojas = async () => {
@@ -88,7 +160,7 @@ export default function Estoque() {
       try {
         if (lojaFiltro) {
           const resposta = await buscar(`/estoque/${lojaFiltro}/produtos`);
-          setProdutos(listarDados(resposta).map(normalizarProdutoEstoque));
+          setProdutos(listarDados(resposta).map(enriquecerProduto));
         } else {
           const lojasList = lojas.filter(l => l.id).slice(0, 3);
           const respostas = await Promise.all(
@@ -100,8 +172,8 @@ export default function Estoque() {
           produtosPorLoja.forEach((lista, idx) => {
             const loja = lojasList[idx];
             lista.forEach((p) => {
-              const produto = normalizarProdutoEstoque(p);
-              const key = produto.produtoId ?? produto.id;
+              const produto = enriquecerProduto(p);
+              const key = idDoProduto(produto);
               if (key == null) return;
               if (!todosProdutos[key]) {
                 todosProdutos[key] = {
@@ -131,7 +203,7 @@ export default function Estoque() {
       }
     };
     carregarEstoque();
-  }, [lojaFiltro, lojas]);
+  }, [lojaFiltro, lojas, enriquecerProduto]);
 
   const produtosFiltrados = useMemo(() => {
     const texto = busca.trim().toLowerCase();
@@ -150,18 +222,19 @@ export default function Estoque() {
     saldoDoProduto(p) > 0 && saldoDoProduto(p) <= Number(p.estoqueMinimo ?? p.estoque_minimo ?? 0)
   )).length;
   const esgotados = produtosFiltrados.filter((p) => saldoDoProduto(p) === 0).length;
-  const estoqueNegativo = produtosFiltrados.filter((p) => saldoDoProduto(p) < 0).length;
   const totalUnidades = produtosFiltrados.reduce((total, produto) => (
-    total + Math.max(0, saldoDoProduto(produto))
+    total + saldoDoProduto(produto)
   ), 0);
-  const produtoDetalhes = produtoSelecionado ? normalizarProdutoEstoque(produtoSelecionado) : null;
+  const produtoDetalhes = produtoSelecionado ? enriquecerProduto(produtoSelecionado) : null;
   const unidadeProduto = valorDo(produtoDetalhes, 'unidadeMedida', 'unidade_medida', 'unidade') || 'unidades';
   const saldoProdutoDetalhes = produtoDetalhes ? saldoDoProduto(produtoDetalhes) : 0;
   const detalhesProduto = produtoDetalhes ? [
     ['SKU', valorDo(produtoDetalhes, 'sku') || '—'],
     ['Código de barras', valorDo(produtoDetalhes, 'codigoBarras', 'codigo_barras', 'codigo') || '—'],
-    ['Categoria', nomeRelacionado(valorDo(produtoDetalhes, 'categoria', 'categoriaNome', 'categoria_nome'))],
-    ['Fornecedor', nomeRelacionado(valorDo(produtoDetalhes, 'fornecedor', 'fornecedorNome', 'fornecedor_nome'))],
+    ['Categoria', valorDo(produtoDetalhes, 'categoriaNome', 'categoria_nome')
+      || nomeRelacionado(produtoDetalhes.categoria) || '—'],
+    ['Fornecedor', valorDo(produtoDetalhes, 'fornecedorNome', 'fornecedor_nome')
+      || nomeRelacionado(produtoDetalhes.fornecedor) || '—'],
     ['Marca', valorDo(produtoDetalhes, 'marca') || '—'],
     ['Unidade de medida', unidadeProduto],
     ['Preço de custo', formatarMoeda(valorDo(produtoDetalhes, 'precoCusto', 'preco_custo'))],
@@ -169,11 +242,7 @@ export default function Estoque() {
     [`Estoque mínimo (${unidadeProduto})`, formatarQuantidade(Number(valorDo(produtoDetalhes, 'estoqueMinimo', 'estoque_minimo') ?? 0))],
     ['Status', statusDoEstoque(saldoProdutoDetalhes, Number(valorDo(produtoDetalhes, 'estoqueMinimo', 'estoque_minimo') ?? 0))[0]],
   ] : [];
-  const obterTextoSaldo = (saldo, unidade = unidadeProduto) => (
-    saldo < 0
-      ? `Faltam ${formatarQuantidade(Math.abs(saldo))} ${unidade}`
-      : formatarQuantidade(saldo)
-  );
+  const obterTextoSaldo = (saldo) => formatarQuantidade(Math.max(0, saldo));
 
   const renderCabecalho = () => (
     <tr>
@@ -197,7 +266,6 @@ export default function Estoque() {
   const renderLinha = (produto) => {
     const saldo = saldoDoProduto(produto);
     const minimo = Number(produto.estoqueMinimo ?? produto.estoque_minimo ?? 0);
-    const unidade = valorDo(produto, 'unidadeMedida', 'unidade_medida', 'unidade') || 'unidades';
     const status = statusDoEstoque(saldo, minimo);
     return (
       <tr key={produto.produtoId ?? produto.id} className={status[1]}>
@@ -216,18 +284,16 @@ export default function Estoque() {
           <>
             {lojasVisiveis.map((loja) => (
               <td key={loja.id}>
-                <strong className={Number(produto.saldosPorLoja?.[loja.id] || 0) < 0 ? 'saldo-negativo' : ''}>
-                  {obterTextoSaldo(Number(produto.saldosPorLoja?.[loja.id] ?? 0), unidade)}
-                </strong>
+                <strong>{obterTextoSaldo(Number(produto.saldosPorLoja?.[loja.id] ?? 0))}</strong>
               </td>
             ))}
             <td className="total-col">
-              <strong className={saldo < 0 ? 'saldo-negativo' : ''}>{obterTextoSaldo(saldo, unidade)}</strong>
+              <strong>{obterTextoSaldo(saldo)}</strong>
             </td>
           </>
         ) : (
           <td>
-            <strong className={saldo < 0 ? 'saldo-negativo' : ''}>{obterTextoSaldo(saldo, unidade)}</strong>
+            <strong>{obterTextoSaldo(saldo)}</strong>
           </td>
         )}
         <td>{formatarQuantidade(minimo)}</td>
@@ -250,10 +316,11 @@ export default function Estoque() {
       <div className="grade-metrica estoque-metricas">
         <div className="metrica"><small>Produtos listados</small><strong>{produtosFiltrados.length}</strong><p>Itens no resultado</p></div>
         <div className="metrica"><small>Unidades em estoque</small><strong>{formatarQuantidade(totalUnidades)}</strong><p>Soma dos saldos positivos</p></div>
-        <div className="metrica"><small>Atenção necessária</small><strong>{baixoEstoque + esgotados + estoqueNegativo}</strong><p>{baixoEstoque} baixo · {esgotados} esgotados · {estoqueNegativo} com saldo insuficiente</p></div>
+        <div className="metrica"><small>Atenção necessária</small><strong>{baixoEstoque + esgotados}</strong><p>{baixoEstoque} baixo · {esgotados} esgotados</p></div>
       </div>
 
       {erro && <div className="aviso">{erro}</div>}
+      {erroReferencias && <div className="aviso" role="status">{erroReferencias}</div>}
 
       <div className="superficie superficie-tabela">
         <div className="filtros">
@@ -318,25 +385,18 @@ export default function Estoque() {
             <div className="estoque-produto-lojas">
               <h3>Saldo por loja</h3>
               {mostrarTodasLojas ? lojasVisiveis.map((loja) => {
-                const saldo = Number(produtoDetalhes.saldosPorLoja?.[loja.id] ?? 0);
+                const saldo = obterSaldo({ saldoDisponivel: produtoDetalhes.saldosPorLoja?.[loja.id] });
                 return (
                   <div key={loja.id}>
                     <span>{loja.nome || loja.titulo || `Loja ${loja.id}`}</span>
-                    <strong className={saldo < 0 ? 'saldo-negativo' : ''}>{obterTextoSaldo(saldo, unidadeProduto)}</strong>
+                    <strong>{obterTextoSaldo(saldo)}</strong>
                   </div>
                 );
               }) : (
                 <div>
                   <span>{lojas.find((loja) => String(loja.id) === String(lojaFiltro))?.nome || 'Loja selecionada'}</span>
-                  <strong className={saldoProdutoDetalhes < 0 ? 'saldo-negativo' : ''}>
-                    {obterTextoSaldo(saldoProdutoDetalhes, unidadeProduto)}
-                  </strong>
+                  <strong>{obterTextoSaldo(saldoProdutoDetalhes)}</strong>
                 </div>
-              )}
-              {saldoProdutoDetalhes < 0 && (
-                <p className="estoque-produto-explicacao">
-                  O saldo está abaixo de zero. Isso significa que faltam {formatarQuantidade(Math.abs(saldoProdutoDetalhes))} {unidadeProduto} em relação ao registrado.
-                </p>
               )}
             </div>
           </section>
