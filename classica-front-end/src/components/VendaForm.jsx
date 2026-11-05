@@ -120,6 +120,7 @@ export default function VendaForm() {
   const [itens, setItens] = useState([]);
   const [produtoBusca, setProdutoBusca] = useState('');
   const [observacao, setObservacao] = useState('');
+  const [frete, setFrete] = useState('');
   const [pagamentos, setPagamentos] = useState([{ id: 'pagamento-inicial', formaPagamento: 'PIX', valor: 0, parcelas: 1 }]);
   const [loading, setLoading] = useState(false);
   const [notice, setNotice] = useState('');
@@ -570,6 +571,7 @@ export default function VendaForm() {
     setItens([]);
     setProdutoBusca('');
     setObservacao('');
+    setFrete('');
     setClienteSelecionado(null);
     setClienteBusca('');
     setPagamentos([{ id: 'pagamento-inicial', formaPagamento: 'PIX', valor: 0, parcelas: 1 }]);
@@ -594,6 +596,10 @@ export default function VendaForm() {
     }
     if (!colaboradorSelecionadoId || !colaboradorSelecionado) {
       setNotice('Selecione o funcionário responsável pela venda.');
+      return false;
+    }
+    if (paraNumero(frete) < 0) {
+      setNotice('O frete não pode ser negativo.');
       return false;
     }
     const valorPagamentos = pagamentos.reduce((total, pagamento) => (
@@ -680,8 +686,9 @@ export default function VendaForm() {
   );
 
   const dividirPagamentosPorOrigem = (grupos) => {
-    const totaisGrupos = grupos.map(({ itens: itensGrupo }) => (
+    const totaisGrupos = grupos.map(({ itens: itensGrupo }, indice) => (
       itensGrupo.reduce((total, item) => total + Number(item.subtotal || 0), 0)
+      + (indice === 0 ? paraNumero(frete) : 0)
     ));
     const totalGrupos = totaisGrupos.reduce((total, valor) => total + valor, 0);
     const alocacoesPorGrupo = grupos.map(() => []);
@@ -712,13 +719,19 @@ export default function VendaForm() {
     let salvos = 0;
     try {
       const gruposComPagamentos = dividirPagamentosPorOrigem(grupos);
-      for (const { loja, itens: itensDaLoja, pagamentos: pagamentosDaOrigem } of gruposComPagamentos) {
+      for (const [indice, { loja, itens: itensDaLoja, pagamentos: pagamentosDaOrigem }] of gruposComPagamentos.entries()) {
         const clienteId = clienteSelecionado ? Number(clienteSelecionado.id || clienteSelecionado.clienteId || clienteSelecionado.cliente_id) : null;
-      const colaboradorId = Number(colaboradorSelecionadoId || 0);
-      const payload = {
+        const colaboradorId = Number(colaboradorSelecionadoId || 0);
+        const valorFrete = indice === 0 ? paraNumero(frete) : 0;
+        const valorItens = itensDaLoja.reduce((total, item) => (
+          total + (paraNumero(item.valorUnitario) * paraNumero(item.quantidade)) - paraNumero(item.desconto)
+        ), 0);
+        const payload = {
           tipoMovimentacao: 'VENDA',
           pagamentos: pagamentosDaOrigem,
           observacao: observacao || 'Venda de produto',
+          valorFrete,
+          valorTotal: Number((valorItens + valorFrete).toFixed(2)),
           estabelecimentoOrigemId: Number(idDaLoja(loja)),
           estabelecimentoDestinoId: null,
           clienteId: Number.isFinite(clienteId) ? clienteId : null,
@@ -742,6 +755,7 @@ export default function VendaForm() {
       setNotice('Venda registrada com sucesso.');
       setItens([]);
       setObservacao('');
+      setFrete('');
       setProdutoBusca('');
       setClienteSelecionado(null);
       setClienteBusca('');
@@ -845,8 +859,8 @@ export default function VendaForm() {
   const valorTotal = useMemo(() => {
     return itens.reduce((total, item) => {
       return total + (paraNumero(item.valorUnitario) * paraNumero(item.quantidade)) - paraNumero(item.desconto);
-    }, 0);
-  }, [itens]);
+    }, paraNumero(frete));
+  }, [itens, frete]);
 
   const quantidadeTotal = useMemo(() => {
     return itens.reduce((total, item) => total + paraNumero(item.quantidade), 0);
@@ -1004,6 +1018,19 @@ export default function VendaForm() {
         </div>
 
         <div className="campo campo-observacao">
+          <label htmlFor="frete-venda">Frete (R$)</label>
+          <input
+            id="frete-venda"
+            type="number"
+            min="0"
+            step="0.01"
+            value={frete}
+            onChange={(event) => setFrete(event.target.value)}
+            placeholder="0,00"
+          />
+        </div>
+
+        <div className="campo campo-observacao">
           <label>Observação</label>
           <textarea
             value={observacao}
@@ -1106,6 +1133,10 @@ export default function VendaForm() {
             <div className="resumo-item">
               <span className="resumo-label">Qtd total</span>
               <span className="resumo-valor">{quantidadeTotal}</span>
+            </div>
+            <div className="resumo-item">
+              <span className="resumo-label">Frete</span>
+              <span className="resumo-valor">R$ {formatarMoeda(frete)}</span>
             </div>
             <div className="resumo-item total">
               <span className="resumo-label">Total</span>
